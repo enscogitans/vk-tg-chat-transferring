@@ -1,0 +1,25 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[dev-packages]
+flake8 = "*"
+mypy = "*"
+pytest = "*"
+pytest-asyncio = "*"
+types-PyYAML = "*"
+
+[packages]
+aiohttp = "*"
+tqdm = "*"
+envparse = "*"
+Pillow = "*"
+pyrogram = "*"
+tgcrypto = "*"  # pyrogram's optional dependency
+vk-api = "*"
+youtube-dl = "*"
+pyyaml = "*"
+
+[requires]
+python_version = "3.10"
