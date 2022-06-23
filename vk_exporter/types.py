@@ -206,14 +206,14 @@ class Voice:
     """https://dev.vk.com/reference/objects/audio-message"""
     link_ogg: str  # link_mp3 is also available
     duration: int
-    transcript: str  # TODO: consider using it
+    transcript: Optional[str]  # TODO: consider using it
 
     @staticmethod
     def parse(voice_dict: dict) -> "Voice":
         return Voice(
             link_ogg=voice_dict["link_ogg"],
             duration=voice_dict["duration"],
-            transcript=voice_dict["transcript"],
+            transcript=voice_dict.get("transcript"),
         )
 
 
