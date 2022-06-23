@@ -36,6 +36,7 @@ class MediaConverterV1(MediaConverter):
         self.n_files_demanded = 0
 
         self.max_video_workers = max_video_workers
+        self.video_download_semaphore = asyncio.Semaphore(max_video_workers)
         self.non_video_download_semaphore = asyncio.Semaphore(max_non_video_workers)
         self.disable_progress_bar = disable_progress_bar
 
@@ -97,17 +98,18 @@ class MediaConverterV1(MediaConverter):
 
     async def _try_convert_video(self, video: vk.Video, session: ClientSession,
                                  loop: AbstractEventLoop, executor: Executor) -> Optional[tg.Video]:
-        if player_url_opt := video.try_get_player_url(self.api):
-            file_path_opt = await loop.run_in_executor(executor, self._try_download_video, player_url_opt)
-            if file_path_opt is not None:
-                return tg.Video(
-                    path=file_path_opt,
-                    title=video.title,
-                    duration=video.duration,
-                    width=video.width,
-                    height=video.height,
-                    thumb_path=await self._try_download_file(video.image_url, session)
-                )
+        async with self.video_download_semaphore:
+            if player_url_opt := video.try_get_player_url(self.api):
+                file_path_opt = await loop.run_in_executor(executor, self._try_download_video, player_url_opt)
+                if file_path_opt is not None:
+                    return tg.Video(
+                        path=file_path_opt,
+                        title=video.title,
+                        duration=video.duration,
+                        width=video.width,
+                        height=video.height,
+                        thumb_path=await self._try_download_file(video.image_url, session),
+                    )
         return None
 
     async def _try_convert_photo(self, photo: vk.Photo, session: ClientSession) -> Optional[tg.Photo]:
