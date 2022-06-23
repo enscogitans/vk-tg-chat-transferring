@@ -60,7 +60,7 @@ class MediaConverterV1(MediaConverter):
 
         async def non_videos_task(session: ClientSession) -> None:
             async def one_task(attch: vk.Content, idx: int) -> None:
-                result[idx] = await self._try_convertert_non_video(attch, session)
+                result[idx] = await self._try_convert_non_video(attch, session)
 
             tasks = [one_task(attch, idx) for attch, idx in non_videos_with_idx]
             await tqdm.gather(*tasks, desc="Non-video", position=0, disable=self.disable_progress_bar)
@@ -82,7 +82,7 @@ class MediaConverterV1(MediaConverter):
         assert not isinstance(attch, vk.Video)
         return isinstance(attch, (vk.Photo, vk.Sticker, vk.Document, vk.Audio, vk.Voice))
 
-    async def _try_convertert_non_video(self, attachment: vk.Content, session: ClientSession) -> Optional[tg.Media]:
+    async def _try_convert_non_video(self, attachment: vk.Content, session: ClientSession) -> Optional[tg.Media]:
         if isinstance(attachment, vk.Photo):
             return await self._try_convert_photo(attachment, session)
         if isinstance(attachment, vk.Sticker):
