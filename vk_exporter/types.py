@@ -136,6 +136,7 @@ class Video:
     width: int
     height: int
     duration: int
+    content_restricted: bool  # If True, video won't be available
     image_url: str
     access_key: Optional[str]  # https://dev.vk.com/reference/objects
 
@@ -148,12 +149,15 @@ class Video:
             width=video_dict.get("width", 0),
             height=video_dict.get("height", 0),
             duration=video_dict["duration"],
+            content_restricted=video_dict.get("content_restricted", False),
             image_url=Video._pick_best_image(video_dict["image"])["url"],
             access_key=video_dict.get("access_key"),
         )
 
     def try_get_player_url(self, api: VkApiMethod) -> Optional[str]:
         # NB: This url doesn't live too much. Use it quickly
+        if self.content_restricted:
+            return None
         video_key = f"{self.owner_id}_{self.id}"
         if self.access_key is not None:  # For example, short videos (aka tik-toks) may not have this key
             video_key += f"_{self.access_key}"
