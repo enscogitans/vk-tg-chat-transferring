@@ -56,5 +56,5 @@ async def main() -> None:
 if __name__ == "__main__":
     if os.name == "nt":  # Windows
         # https://stackoverflow.com/questions/68123296/asyncio-throws-runtime-error-with-exception-ignored
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())  # type: ignore
     asyncio.run(main())
