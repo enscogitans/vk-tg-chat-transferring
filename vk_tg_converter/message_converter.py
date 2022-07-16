@@ -231,7 +231,7 @@ class MessageConverterV1(MessageConverter):
             header = "[Geo]"
             body = [
                 attachment.title,
-                f"https://google.com/maps/?q={attachment.latitude},{attachment.longitude}",
+                f"https://www.google.com/maps/search/?api=1&query={attachment.latitude},{attachment.longitude}",
             ]
         elif isinstance(attachment, vk.Photo):
             header = "[Photo]"
