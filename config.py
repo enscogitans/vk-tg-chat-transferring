@@ -46,6 +46,7 @@ class Config:
             self.env = env
             self.client_name = "vk"
             self.scope: int = VkUserPermissions.MESSAGES | VkUserPermissions.VIDEO
+            self.api_version = "5.131"
             self.timezone = _get_local_timezone()
             # workers which download media files
             self.max_non_video_workers = 10
@@ -59,7 +60,3 @@ class Config:
         @property
         def api_id(self) -> int:
             return self.env.int("VK_API_ID")  # type: ignore
-
-        @property
-        def api_version(self) -> str:
-            return self.env.str("VK_API_VERSION")  # type: ignore
