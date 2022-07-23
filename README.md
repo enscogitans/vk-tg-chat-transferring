@@ -66,7 +66,11 @@ https://core.telegram.org/api/import
 
 4. При желании можете создать тестовую беседу и проверить, как telegram сопоставляет пользователей.
 
-   `python main.py utils test-contacts`
+   `python main.py utils test-contacts --chat ID`
+
+   или
+
+   `python main.py utils test-contacts --name 'new chat name'`
 
    Вместо имени пользователя вы должны увидеть его номер телефона. Теперь, если вы добавите этого пользователя в беседу,
    то номер телефона пропадёт, а сообщение станет выглядеть так, будто бы его отправил этот пользователь.
