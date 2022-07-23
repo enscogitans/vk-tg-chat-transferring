@@ -91,7 +91,7 @@ https://core.telegram.org/api/import
 
   ID всех чатов можно посмотреть, запустив `python main.py utils list-chats`. Полезно понимать, что полученные ID
   не совсем настоящие: библиотека pyrogram модифицирует их
-  и [приводит к своему формату](https://docs.pyrogram.org/topics/advanced-usage?highlight=peer+id#chat-ids), поэтому
+  и [приводит к своему формату](https://docs.pyrogram.org/topics/advanced-usage?highlight=For+example#chat-ids), поэтому
   использовать эти ID где-либо ещё, кроме этого приложения, напрямую не получится.
 
 * Если вы хотите создать новую супергруппу и тут же импортировать в неё все сообщения
