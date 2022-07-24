@@ -30,10 +30,7 @@ class PreparedMessage:
     def __post_init__(self) -> None:
         assert self.reply is None or not self.forwards, \
             "I believe vk won't provide reply and forwarded messages simultaneously"
-        if self.reply is not None:
-            assert self.text or self.attachments, "Reply has no content"
-        if not (self.text or self.attachments or self.forwards):
-            self.text = "*empty message*"
+        assert self.text or self.attachments or self.forwards, "Message has no content"
 
 
 @dataclass
@@ -65,7 +62,7 @@ class MessageConverterV1(MessageConverter):
     def _prepare_message(self, msg: vk.Message) -> PreparedMessage:
         if msg.action is not None:
             return self._prepare_service_message(msg)
-        return PreparedMessage(
+        prepared_message = PreparedMessage(
             vk_name=self.username_manager.get_full_name(msg.from_id),
             tg_name_opt=self.username_manager.try_get_tg_name(msg.from_id),
             date=msg.date,
@@ -74,6 +71,9 @@ class MessageConverterV1(MessageConverter):
             attachments=self._prepare_attachments(msg),
             forwards=list(map(self._prepare_message, msg.fwd_messages)),
         )
+        if not (prepared_message.text or prepared_message.attachments or prepared_message.forwards):
+            prepared_message.text = "*empty message*"
+        return prepared_message
 
     async def _convert_media_in_messages(self, messages: list[PreparedMessage]) -> None:
         """This function does not convert media in nested messages"""
