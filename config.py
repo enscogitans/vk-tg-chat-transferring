@@ -1,6 +1,6 @@
-from datetime import datetime, tzinfo
 import envparse
-from pathlib import PurePath
+from datetime import datetime, tzinfo
+from pathlib import PurePath, Path
 from typing import Optional
 
 from vk_api import VkUserPermissions
@@ -20,11 +20,11 @@ class Config:
 
         self.tg = Config.Telegram(env)
         self.vk = Config.Vk(env)
-        self.vk_default_raw_export_file = PurePath("vk_raw_messages.pickle")
-        self.vk_default_export_file = PurePath("vk_messages.pickle")
-        self.tg_default_export_file = PurePath("tg_messages.pickle")
-        self.tg_default_media_export_dir = PurePath("exported_media")
-        self.default_contacts_mapping_file = PurePath("contacts_mapping.yaml")
+        self.vk_default_raw_export_file = Path("vk_raw_messages.pickle")
+        self.vk_default_export_file = Path("vk_messages.pickle")
+        self.tg_default_export_file = Path("tg_messages.pickle")
+        self.tg_default_media_export_dir = Path("exported_media")
+        self.default_contacts_mapping_file = Path("contacts_mapping.yaml")
 
     class Telegram:
         def __init__(self, env: envparse.Env) -> None:

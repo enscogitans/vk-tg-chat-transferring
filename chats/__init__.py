@@ -20,12 +20,12 @@ def fill_parser(parser: argparse.ArgumentParser, config: Config) -> None:
 
     invite_parser = subparsers.add_parser("invite")
     invite_parser.add_argument("chat")
-    invite_parser.add_argument("--contacts", default=config.default_contacts_mapping_file,
+    invite_parser.add_argument("--contacts", type=Path, default=config.default_contacts_mapping_file,
                                metavar="CONTACTS_FILE", help="Path to contacts mapping data")
 
     create_parser = subparsers.add_parser("create")
     create_parser.add_argument("--title", required=True, help="Name of the created chat")
-    create_parser.add_argument("--invite", nargs="?", const=config.default_contacts_mapping_file,
+    create_parser.add_argument("--invite", nargs="?", type=Path, const=config.default_contacts_mapping_file,
                                metavar="CONTACTS_FILE", help="Invite users listed in file with contacts")
     create_parser.add_argument("--mute", action="store_true", help="Mute all users on chat creation")
 
@@ -42,7 +42,7 @@ async def main(parser: argparse.ArgumentParser, args: argparse.Namespace, tg_cli
             async with tg_client:
                 await set_is_mute_chat(tg_client, args.chat, is_mute=False)
         case "invite":
-            contacts_mapping_file = Path(args.contacts)
+            contacts_mapping_file: Path = args.contacts
             if not contacts_mapping_file.exists():
                 parser.error(f"Contacts mapping file does not exist: '{contacts_mapping_file}'")
             contacts_to_invite = load_contacts_from_yaml(contacts_mapping_file, empty_as_none=True)
@@ -51,7 +51,7 @@ async def main(parser: argparse.ArgumentParser, args: argparse.Namespace, tg_cli
         case "create":
             contacts_to_invite: list[ContactInfo] = []
             if args.contacts is not None:
-                contacts_mapping_file = Path(args.contacts)
+                contacts_mapping_file: Path = args.contacts
                 if not contacts_mapping_file.exists():
                     parser.error(f"Contacts mapping file does not exist: '{contacts_mapping_file}'")
                 contacts_to_invite = load_contacts_from_yaml(contacts_mapping_file, empty_as_none=True)

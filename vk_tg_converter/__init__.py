@@ -15,20 +15,20 @@ from vk_tg_converter.converter import convert_messages
 
 def fill_parser(parser: argparse.ArgumentParser, config: Config) -> None:
     group_1 = parser.add_mutually_exclusive_group()
-    group_1.add_argument("--input", default=config.vk_default_export_file,
+    group_1.add_argument("--input", type=Path, default=config.vk_default_export_file,
                          metavar="PATH", help="Path to vk messages file")
     group_1.add_argument("--dummy-input", action="store_true",
                          help="Use dummy tg messages instead of real conversion. "
                               "You must provide vk-tg contacts mapping")
 
-    parser.add_argument("--output", default=config.tg_default_export_file,
+    parser.add_argument("--output", type=Path, default=config.tg_default_export_file,
                         metavar="PATH", help="File to export tg messages in")
-    parser.add_argument("--media-export-dir", default=config.tg_default_media_export_dir,
+    parser.add_argument("--media-export-dir", type=Path, default=config.tg_default_media_export_dir,
                         metavar="PATH", help="Directory to export media in. Must not exist")
     parser.add_argument("--no-progress-bar", action="store_true")
 
     group_2 = parser.add_mutually_exclusive_group()
-    group_2.add_argument("--contacts", default=config.default_contacts_mapping_file,
+    group_2.add_argument("--contacts", type=Path, default=config.default_contacts_mapping_file,
                          metavar="PATH", help="Path to file with vk-tg contacts mapping")
     group_2.add_argument("--skip-contacts", action="store_true", help="Do not use contacts mapping")
 
@@ -38,15 +38,13 @@ async def main(parser: argparse.ArgumentParser, args: argparse.Namespace,
     if args.dummy_input and args.skip_contacts:
         parser.error(f"You must provide contacts mapping if you use --dummy-input")
 
-    contacts_mapping_file: Optional[Path] = None
-    if not args.skip_contacts:
-        contacts_mapping_file = Path(args.contacts)
-    vk_messages_file_opt = None if args.dummy_input else Path(args.input)
-    tg_messages_export_file = Path(args.output)
-    tg_media_export_dir = Path(args.media_export_dir)
+    contacts_mapping_file_opt: Optional[Path] = None if args.skip_contacts else args.contacts
+    vk_messages_file_opt: Optional[Path] = None if args.dummy_input else args.input
+    tg_messages_export_file: Path = args.output
+    tg_media_export_dir: Path = args.media_export_dir
 
-    if contacts_mapping_file and not contacts_mapping_file.exists():
-        parser.error(f"Contacts mapping file does not exist: '{contacts_mapping_file}'")
+    if contacts_mapping_file_opt is not None and not contacts_mapping_file_opt.exists():
+        parser.error(f"Contacts mapping file does not exist: '{contacts_mapping_file_opt}'")
     if vk_messages_file_opt is not None and not vk_messages_file_opt.exists():
         parser.error(f"Vk messages file does not exist: '{vk_messages_file_opt}'")
     if tg_messages_export_file.exists():
@@ -55,8 +53,8 @@ async def main(parser: argparse.ArgumentParser, args: argparse.Namespace,
         parser.error(f"Telegram media export directory is not empty: '{tg_media_export_dir}'")
 
     prepared_contacts: Optional[list[ContactInfo]] = None
-    if contacts_mapping_file is not None:
-        prepared_contacts = load_contacts_from_yaml(contacts_mapping_file, empty_as_none=True)
+    if contacts_mapping_file_opt is not None:
+        prepared_contacts = load_contacts_from_yaml(contacts_mapping_file_opt, empty_as_none=True)
 
     tg_messages: list[tg.Message]
     if args.dummy_input:
