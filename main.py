@@ -2,9 +2,9 @@ import argparse
 import asyncio
 import os
 
+import chats
 import login
 import tg_importer
-import utils
 import vk_exporter
 import vk_tg_converter
 import vk_tg_converter.contacts
@@ -13,6 +13,8 @@ from config import Config
 
 
 async def main() -> None:
+    config = Config()
+
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="module", required=True)
 
@@ -26,16 +28,15 @@ async def main() -> None:
     vk_tg_converter.contacts.fill_parser(contacts_parser)
 
     convert_parser = subparsers.add_parser("convert")
-    vk_tg_converter.fill_parser(convert_parser)
+    vk_tg_converter.fill_parser(convert_parser, config)
+
+    chats_parser = subparsers.add_parser("chats")
+    chats.fill_parser(chats_parser, config)
 
     import_parser = subparsers.add_parser("import")
     tg_importer.fill_parser(import_parser)
 
-    utils_parser = subparsers.add_parser("utils")
-    utils.fill_parser(utils_parser)
-
     args = parser.parse_args()
-    config = Config()
     match args.module:
         case "login":
             await login.main(args, config)
@@ -45,10 +46,10 @@ async def main() -> None:
             await vk_tg_converter.contacts.main(contacts_parser, args, config, VkClient(config.vk), TgClient(config.tg))
         case "convert":
             await vk_tg_converter.main(convert_parser, args, config, VkClient(config.vk))
+        case "chats":
+            await chats.main(chats_parser, args, TgClient(config.tg))
         case "import":
             await tg_importer.main(import_parser, args, config, TgClient(config.tg))
-        case "utils":
-            await utils.main(utils_parser, args, config, TgClient(config.tg))
         case module:
             raise ValueError(f"Unexpected module {module}")
 

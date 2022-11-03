@@ -57,7 +57,8 @@ async def check_tg_names_in_mapping_file(mapping_file: Path, tg_client: TgClient
             return True  # Set empty string to skip check for the contact
         return tg_name in tg_contacts_names
 
-    mapping_data: list[ContactInfo] = load_contacts_from_yaml(mapping_file, normalize=False)
+    mapping_data: list[ContactInfo] = load_contacts_from_yaml(mapping_file, empty_as_none=False)
+    # TODO: check all contacts have unique names
     wrong_contacts: list[ContactInfo] = [
         contact for contact in mapping_data if not is_name_correct(contact.tg_name_opt)
     ]
@@ -93,7 +94,7 @@ def dump_contacts_to_yaml(contacts: list[ContactInfo], file_path: Path) -> None:
         yaml.dump(data, f, allow_unicode=True)
 
 
-def load_contacts_from_yaml(file_path: Path, *, normalize: bool) -> list[ContactInfo]:
+def load_contacts_from_yaml(file_path: Path, *, empty_as_none: bool) -> list[ContactInfo]:
     with file_path.open("r") as f:
         data = yaml.load(f, yaml.Loader)
     result: list[ContactInfo] = []
@@ -101,7 +102,7 @@ def load_contacts_from_yaml(file_path: Path, *, normalize: bool) -> list[Contact
         [[vk_id, names]] = list(item.items())
         vk_name: str = names[0]["vk_name"]
         tg_name_opt: Optional[str] = names[1]["tg_name"]
-        if normalize and tg_name_opt == "":
+        if empty_as_none and tg_name_opt == "":
             tg_name_opt = None
         result.append(ContactInfo(vk_id=vk_id, vk_name=vk_name, tg_name_opt=tg_name_opt))
     return result
