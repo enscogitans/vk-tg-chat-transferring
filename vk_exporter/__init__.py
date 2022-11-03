@@ -9,7 +9,7 @@ from vk_exporter.exporter import export_messages, export_raw_messages, parse_raw
 from vk_exporter.types import Message
 
 
-def fill_parser(parser: argparse.ArgumentParser) -> None:
+def fill_parser(parser: argparse.ArgumentParser, config: Config) -> None:
     parser.add_argument("--export-file", type=Path, metavar="PATH",
                         help="file where messages will be dumped (in pickle format)")
 
@@ -20,7 +20,8 @@ def fill_parser(parser: argparse.ArgumentParser) -> None:
     group1.add_argument("--no-progress-bar", action="store_true")
 
     group2 = parser.add_argument_group("Export from raw messages file")
-    group2.add_argument("--raw-input", nargs="?", const="", metavar="PATH", dest="raw_input_path",
+    group2.add_argument("--raw-input", nargs="?", const=config.vk_default_raw_export_file,
+                        metavar="PATH", dest="raw_input_path",
                         help="file containing raw messages data. If PATH is not provided, use default one")
 
 
@@ -28,15 +29,11 @@ def main(parser: argparse.ArgumentParser, args: argparse.Namespace, config: Conf
     if (args.chat is None) == (args.raw_input_path is None):
         parser.error("Provide either '--chat ID' or '--raw-input [PATH]'")
 
-    raw_input_file: Optional[Path]
-    if args.raw_input_path is None:
-        raw_input_file = None
-    elif args.raw_input_path == "":
-        raw_input_file = Path(config.vk_default_raw_export_file)
-    else:
+    raw_input_file: Optional[Path] = None
+    if args.raw_input_path is not None:
         raw_input_file = Path(args.raw_input_path)
-    if raw_input_file and not raw_input_file.exists():
-        parser.error(f"File with raw messages does not exist: '{raw_input_file}'")
+        if not raw_input_file.exists():
+            parser.error(f"File with raw messages does not exist: '{raw_input_file}'")
 
     export_file: Path
     if args.export_file is not None:
