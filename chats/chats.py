@@ -1,6 +1,7 @@
 from typing import Optional
 
-from pyrogram.types import User
+from pyrogram.enums import ChatType
+from pyrogram.types import Chat, User
 
 from common import TgClient
 from vk_tg_converter import ContactInfo
@@ -18,8 +19,10 @@ async def list_chats(client: TgClient) -> None:
 
 async def set_is_mute_chat(client: TgClient, chat_id: int, *, is_mute: bool) -> None:
     chat = await client.get_chat(chat_id)
+    assert isinstance(chat, Chat), f"You are not a member of the chat {chat_id}"
+    assert chat.type in (ChatType.GROUP, ChatType.SUPERGROUP), f"Chat {chat_id} is not a group or supergroup"
+    assert chat.permissions is not None, "Groups and supergroups have this field set"
 
-    assert chat.permissions is not None, f"Make sure '{chat_id}' is group or supergroup"
     if chat.permissions.can_send_messages != is_mute:
         if is_mute:
             print("The chat is already muted")
@@ -69,10 +72,12 @@ async def create_chat(client: TgClient, title: str, contacts: list[ContactInfo],
 async def _add_users_to_chat(
         client: TgClient, chat_id: int, contacts: list[ContactInfo]) -> tuple[list[ContactInfo], list[ContactInfo]]:
     contact_to_id: dict[ContactInfo, Optional[int]] = await _get_contact_to_user_id_mapping(client, contacts)
-    user_ids_to_add = [user_id for user_id in contact_to_id.values() if user_id is not None]
-    await client.add_chat_members(chat_id, user_ids_to_add)
+    user_ids_to_add: list[int] = [user_id for user_id in contact_to_id.values() if user_id is not None]
+    await client.add_chat_members(chat_id, user_ids_to_add)  # type: ignore
 
-    chat_members_names: set[str] = {_make_name(member.user) async for member in client.get_chat_members(chat_id)}
+    chat_members_generator = client.get_chat_members(chat_id)
+    assert chat_members_generator is not None
+    chat_members_names: set[str] = {_make_name(member.user) async for member in chat_members_generator}
     added_contacts = [contact for contact in contacts if contact.tg_name_opt in chat_members_names]
     missing_contacts = [contact for contact in contacts if contact.tg_name_opt not in chat_members_names]
     return added_contacts, missing_contacts

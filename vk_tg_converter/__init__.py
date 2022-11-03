@@ -36,7 +36,7 @@ def fill_parser(parser: argparse.ArgumentParser, config: Config) -> None:
 async def main(parser: argparse.ArgumentParser, args: argparse.Namespace,
                vk_config: Config.Vk, vk_client: VkClient) -> None:
     if args.dummy_input and args.skip_contacts:
-        parser.error(f"You must provide contacts mapping if you use --dummy-input")
+        parser.error("You must provide contacts mapping if you use --dummy-input")
 
     contacts_mapping_file_opt: Optional[Path] = None if args.skip_contacts else args.contacts
     vk_messages_file_opt: Optional[Path] = None if args.dummy_input else args.input

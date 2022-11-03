@@ -1,7 +1,7 @@
 import argparse
 import pickle
 from pathlib import Path
-from typing import Optional, Union
+from typing import Union
 
 from common.vk_client import VkClient
 from config import Config
