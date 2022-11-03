@@ -50,8 +50,8 @@ async def main(parser: argparse.ArgumentParser, args: argparse.Namespace, tg_cli
                 await invite_users(tg_client, args.chat, contacts_to_invite)
         case "create":
             contacts_to_invite = []
-            if args.contacts is not None:
-                contacts_mapping_file = args.contacts
+            if args.invite is not None:
+                contacts_mapping_file = args.invite
                 if not contacts_mapping_file.exists():
                     parser.error(f"Contacts mapping file does not exist: '{contacts_mapping_file}'")
                 contacts_to_invite = load_contacts_from_yaml(contacts_mapping_file, empty_as_none=True)
