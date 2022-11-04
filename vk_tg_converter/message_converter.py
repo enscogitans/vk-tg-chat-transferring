@@ -35,7 +35,7 @@ class PreparedMessage:
 
 @dataclass
 class PreparedAttachment:
-    attachment: vk.Content
+    attachment: vk.Attachment
     alternative_text_need_newline_before_header: bool
     alternative_text_header: str
     alternative_text_header_extra_info: str
@@ -87,11 +87,8 @@ class MessageConverterV1(MessageConverter):
 
     @staticmethod
     def _prepare_attachments(msg: vk.Message) -> list[PreparedAttachment]:
-        attachments: list[vk.Content] = [] if msg.geo is None else [msg.geo]
-        attachments += msg.attachments
-
         result: list[PreparedAttachment] = []
-        for attch in attachments:
+        for attch in msg.attachments:
             if not MessageConverterV1._should_skip_attachment(attch, msg.text):
                 need_newline, header, header_extra_info, body = \
                     MessageConverterV1._prepare_alternative_text_for_attachment(attch)
@@ -224,7 +221,7 @@ class MessageConverterV1(MessageConverter):
         return re.sub(pattern, r"\1", msg.text)
 
     @staticmethod
-    def _prepare_alternative_text_for_attachment(attachment: vk.Content) -> tuple[bool, str, str, list[str]]:
+    def _prepare_alternative_text_for_attachment(attachment: vk.Attachment) -> tuple[bool, str, str, list[str]]:
         need_newline_before_header: bool = False
         header: str
         header_extra_info: str = ""
@@ -288,7 +285,7 @@ class MessageConverterV1(MessageConverter):
         return need_newline_before_header, header, header_extra_info, body
 
     @staticmethod
-    def _should_skip_attachment(attachment: vk.Content, msg_text: str) -> bool:
+    def _should_skip_attachment(attachment: vk.Attachment, msg_text: str) -> bool:
         if not isinstance(attachment, vk.Link):
             return False
 

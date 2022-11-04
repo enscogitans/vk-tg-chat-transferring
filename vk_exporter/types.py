@@ -16,11 +16,13 @@ class Message:
     reply_message: Optional["Message"] = None
     fwd_messages: tuple["Message", ...] = tuple()
     action: Optional["Action"] = None  # E.g. add someone to the chat
-    geo: Optional["Geo"] = None
 
     @staticmethod
     def parse(message_dict: dict) -> "Message":
-        attachments = tuple(parse_attachment(info) for info in message_dict.get("attachments", []))
+        attachments: tuple["Attachment", ...] = ()
+        if "geo" in message_dict:
+            attachments += (Geo.parse(message_dict["geo"]),)
+        attachments += tuple(parse_attachment(info) for info in message_dict.get("attachments", []))
         fwd_messages = tuple(Message.parse(info) for info in message_dict.get("fwd_messages", []))
         reply_message: Optional[Message] = None
         if "reply_message" in message_dict:
@@ -28,9 +30,6 @@ class Message:
         action: Optional[Action] = None
         if "action" in message_dict:
             action = parse_action(message_dict["action"])
-        geo: Optional[Geo] = None
-        if "geo" in message_dict:
-            geo = Geo.parse(message_dict["geo"])
         return Message(
             date=datetime.fromtimestamp(message_dict["date"], tz=timezone.utc),
             from_id=message_dict["from_id"],
@@ -40,7 +39,6 @@ class Message:
             fwd_messages=fwd_messages,
             reply_message=reply_message,
             action=action,
-            geo=geo,
         )
 
 
@@ -60,6 +58,7 @@ class Geo:
 
 
 Attachment: TypeAlias = Union[
+    "Geo",
     "Photo",
     "Video",
     "Audio",
@@ -71,8 +70,6 @@ Attachment: TypeAlias = Union[
     "Link",
     "UnsupportedAttachment",
 ]
-
-Content: TypeAlias = Union[Geo, Attachment]
 
 
 def parse_attachment(attachment_dict: dict) -> Attachment:

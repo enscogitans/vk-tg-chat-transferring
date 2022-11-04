@@ -20,7 +20,7 @@ from vk_tg_converter.video_downloader import VideoDownloader
 
 class MediaConverter(abc.ABC):
     @abc.abstractmethod
-    async def try_convert(self, attachments: list[vk.Content]) -> list[Optional[tg.Media]]: ...
+    async def try_convert(self, attachments: list[vk.Attachment]) -> list[Optional[tg.Media]]: ...
 
 
 class MediaConverterV1(MediaConverter):
@@ -45,11 +45,11 @@ class MediaConverterV1(MediaConverter):
         self.video_downloader = VideoDownloader(
             allowed_formats, conversion_format, max_video_size_mb, video_quality, video_download_retries)
 
-    async def try_convert(self, attachments: list[vk.Content]) -> list[Optional[tg.Media]]:
+    async def try_convert(self, attachments: list[vk.Attachment]) -> list[Optional[tg.Media]]:
         result: list[Optional[tg.Media]] = [None] * len(attachments)
 
         videos_with_idx: list[tuple[vk.Video, int]] = []
-        non_videos_with_idx: list[tuple[vk.Content, int]] = []
+        non_videos_with_idx: list[tuple[vk.Attachment, int]] = []
         for i, attch in enumerate(attachments):
             if isinstance(attch, vk.Video):
                 videos_with_idx.append((attch, i))
@@ -59,7 +59,7 @@ class MediaConverterV1(MediaConverter):
         loop = asyncio.get_running_loop()
 
         async def non_videos_task(session: ClientSession) -> None:
-            async def one_task(attch: vk.Content, idx: int) -> None:
+            async def one_task(attch: vk.Attachment, idx: int) -> None:
                 result[idx] = await self._try_convert_non_video(attch, session)
 
             tasks = [one_task(attch, idx) for attch, idx in non_videos_with_idx]
@@ -78,11 +78,11 @@ class MediaConverterV1(MediaConverter):
         return result
 
     @staticmethod
-    def _is_non_video_supported(attch: vk.Content) -> bool:
-        assert not isinstance(attch, vk.Video)
-        return isinstance(attch, (vk.Photo, vk.Sticker, vk.Document, vk.Audio, vk.Voice))
+    def _is_non_video_supported(attachment: vk.Attachment) -> bool:
+        assert not isinstance(attachment, vk.Video)
+        return isinstance(attachment, (vk.Photo, vk.Sticker, vk.Document, vk.Audio, vk.Voice))
 
-    async def _try_convert_non_video(self, attachment: vk.Content, session: ClientSession) -> Optional[tg.Media]:
+    async def _try_convert_non_video(self, attachment: vk.Attachment, session: ClientSession) -> Optional[tg.Media]:
         if isinstance(attachment, vk.Photo):
             return await self._try_convert_photo(attachment, session)
         if isinstance(attachment, vk.Sticker):
