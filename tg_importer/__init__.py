@@ -9,9 +9,7 @@ from tg_importer.importer import import_messages
 
 
 def fill_parser(parser: argparse.ArgumentParser, config: Config) -> None:
-    me_group = parser.add_mutually_exclusive_group(required=True)
-    me_group.add_argument("--chat", type=int, metavar="ID", help="Chat to import messages into")
-    me_group.add_argument("--name", help="Name of the chat to create and import messages into")
+    parser.add_argument("chat", type=int, metavar="CHAT_ID", help="Chat to import messages into")
     parser.add_argument("--input", type=Path, default=config.tg_default_export_file,
                         metavar="PATH", help="File containing telegram messages")
     parser.add_argument("--no-progress-bar", action="store_true")
@@ -31,7 +29,7 @@ async def main(parser: argparse.ArgumentParser, args: argparse.Namespace,
         success: bool = await import_messages(
             tg_client, tg_config.timezone, tg_messages,
             tg_config.max_simultaneously_uploaded_files,
-            args.no_progress_bar, args.chat, args.name)
+            args.no_progress_bar, args.chat)
 
     if success:
         print("Import finished successfully")

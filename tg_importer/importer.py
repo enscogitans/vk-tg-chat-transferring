@@ -1,7 +1,6 @@
 import asyncio
 import datetime
 import io
-from typing import Optional
 
 from pyrogram import utils
 from pyrogram.raw.base import InputFile, InputPeer
@@ -21,28 +20,13 @@ async def import_messages(
         tg_messages: list[tg.Message],
         max_tasks: int,  # Maximum number of files being uploaded simultaneously
         disable_progress_bar: bool,
-        chat_id: Optional[int],
-        chat_title: Optional[str]) -> bool:
-    if (chat_id is None) == (chat_title is None):
-        raise ValueError("Provide either 'peer_id' or 'chat_title'")
-
-    if chat_id is None:
-        assert chat_title is not None
-        chat = await tg_client.create_supergroup(chat_title)
-        chat_id = chat.id
-        # TODO: add logger, print chat_id
-
+        chat_id: int) -> bool:
     peer_type: str = utils.get_peer_type(chat_id)
-    if peer_type == "channel":  # supergroup
-        is_group = True
-    elif peer_type == "user":
-        is_group = False
-    else:
+    if peer_type not in ("channel", "user"):  # supergroup or private chat
         raise ValueError(f"Invalid peer, only user and channel (supergroup) are supported. Provided {peer_type}")
-
+    is_group: bool = peer_type == "channel"
     encoder = WhatsAppAndroidEncoder(tg_timezone, is_group)
-    success: bool = \
-        await _import_messages_inner(tg_client, tg_messages, encoder, chat_id, max_tasks, disable_progress_bar)
+    success = await _import_messages_inner(tg_client, tg_messages, encoder, chat_id, max_tasks, disable_progress_bar)
     return success
 
 
