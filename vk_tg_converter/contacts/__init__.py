@@ -27,20 +27,22 @@ def fill_parser(parser: argparse.ArgumentParser, config: Config) -> None:
 
 async def main(parser: argparse.ArgumentParser, args: argparse.Namespace,
                vk_client: VkClient, tg_client: TgClient) -> None:
-    async with tg_client:
-        match args.submodule:
-            case "list":
+    match args.submodule:
+        case "list":
+            async with tg_client:
                 await list_contacts(tg_client)
-            case "prepare":
-                if not args.input.exists():
-                    parser.error(f"Input file does not exist: '{args.input}'")
-                if args.output.exists():
-                    parser.error(f"Output file already exists: '{args.output}'")
-                um = UsernameManagerV1(vk_client.get_api())
+        case "prepare":
+            if not args.input.exists():
+                parser.error(f"Input file does not exist: '{args.input}'")
+            if args.output.exists():
+                parser.error(f"Output file already exists: '{args.output}'")
+            um = UsernameManagerV1(vk_client.get_api())
+            async with tg_client:
                 await make_contacts_mapping_file(args.output, args.input, tg_client, um)
-            case "check":
-                if not args.input.exists():
-                    parser.error(f"File with mapping data not found: '{args.input}'")
+        case "check":
+            if not args.input.exists():
+                parser.error(f"File with mapping data not found: '{args.input}'")
+            async with tg_client:
                 await check_tg_names_in_mapping_file(args.input, tg_client)
-            case submodule:
-                raise ValueError(f"Unexpected submodule {submodule}")
+        case submodule:
+            raise ValueError(f"Unexpected submodule {submodule}")
