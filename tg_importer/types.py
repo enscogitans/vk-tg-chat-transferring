@@ -1,6 +1,6 @@
 import abc
-import dataclasses
 import datetime
+from dataclasses import dataclass
 from pathlib import PurePath
 from typing import Optional
 
@@ -14,7 +14,15 @@ from pyrogram.raw.types import (
 )
 
 
-@dataclasses.dataclass
+@dataclass
+class ChatHistory:
+    messages: list["Message"]
+    # Only valid for chats (not private messages):
+    title: Optional[str]  # All chats have title
+    photo: Optional["Photo"]  # If available
+
+
+@dataclass
 class Message:
     ts: datetime.datetime
     user: str

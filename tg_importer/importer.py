@@ -14,10 +14,10 @@ from common.tg_client import TgClient
 from tg_importer.encoder import Encoder, WhatsAppAndroidEncoder
 
 
-async def import_messages(
+async def import_history(
         tg_client: TgClient,
         tg_timezone: datetime.tzinfo,
-        tg_messages: list[tg.Message],
+        tg_history: tg.ChatHistory,
         max_tasks: int,  # Maximum number of files being uploaded simultaneously
         disable_progress_bar: bool,
         chat_id: int) -> bool:
@@ -26,7 +26,8 @@ async def import_messages(
         raise ValueError(f"Invalid peer, only user and channel (supergroup) are supported. Provided {peer_type}")
     is_group: bool = peer_type == "channel"
     encoder = WhatsAppAndroidEncoder(tg_timezone, is_group)
-    success = await _import_messages_inner(tg_client, tg_messages, encoder, chat_id, max_tasks, disable_progress_bar)
+    success = await _import_messages_inner(
+        tg_client, tg_history.messages, encoder, chat_id, max_tasks, disable_progress_bar)
     return success
 
 

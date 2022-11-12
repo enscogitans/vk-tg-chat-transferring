@@ -20,9 +20,9 @@ class Config:
 
         self.tg = Config.Telegram(env)
         self.vk = Config.Vk(env)
-        self.vk_default_raw_export_file = Path("vk_raw_messages.pickle")
-        self.vk_default_export_file = Path("vk_messages.pickle")
-        self.tg_default_export_file = Path("tg_messages.pickle")
+        self.vk_default_raw_export_file = Path("vk_raw_history.pickle")
+        self.vk_default_export_file = Path("vk_history.pickle")
+        self.tg_default_export_file = Path("tg_history.pickle")
         self.tg_default_media_export_dir = Path("exported_media")
         self.default_contacts_mapping_file = Path("contacts_mapping.yaml")
 

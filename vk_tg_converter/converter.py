@@ -11,16 +11,26 @@ from vk_tg_converter.media_converter import MediaConverterV1
 from vk_tg_converter.message_converter import MessageConverterV1
 
 
-async def convert_messages(
+async def convert_chat_history(
         vk_api: VkApiMethod,
         config: Config.Vk,
-        vk_messages: list[vk.Message],
+        vk_history: vk.ChatHistory,
         prepared_contacts: Optional[list[ContactInfo]],
         tg_media_export_dir: Path,
-        disable_progress_bar: bool) -> list[tg.Message]:
+        disable_progress_bar: bool) -> tg.ChatHistory:
     username_manager = UsernameManagerV1(vk_api, prepared_contacts)
     media_converter = MediaConverterV1(
         vk_api, tg_media_export_dir, config.max_video_workers, config.max_non_video_workers,
         config.max_video_size_mb, config.video_quality, config.max_video_download_retries, disable_progress_bar)
     converter = MessageConverterV1(config.timezone, username_manager, media_converter)
-    return await converter.convert(vk_messages)
+
+    photo: Optional[tg.Photo] = None
+    if vk_history.photo is not None:
+        [media] = await media_converter.try_convert([vk_history.photo])
+        assert media is None or isinstance(media, tg.Photo)
+        photo = media
+    return tg.ChatHistory(
+        messages=await converter.convert(vk_history.messages),
+        title=vk_history.title,
+        photo=photo,
+    )

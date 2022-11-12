@@ -6,6 +6,14 @@ from vk_api.vk_api import VkApiMethod
 
 
 @dataclass(frozen=True)
+class ChatHistory:
+    messages: list["Message"]
+    # Only valid for chats (not private messages):
+    title: Optional[str]  # All chats have title
+    photo: Optional["Photo"]  # Not all chats have photo
+
+
+@dataclass(frozen=True)
 class Message:
     """https://dev.vk.com/reference/objects/message"""
     from_id: int

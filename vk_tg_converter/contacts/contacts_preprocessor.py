@@ -24,12 +24,14 @@ async def list_contacts(tg_client: TgClient) -> None:
 
 
 async def make_contacts_mapping_file(
-        dst_mapping_file: Path, exported_messages_path: Path,
+        dst_mapping_file: Path, vk_history_path: Path,
         tg_client: TgClient, username_manager: UsernameManager) -> None:
     tg_contacts_names: set[str] = await _get_tg_contacts_names(tg_client)
 
-    with exported_messages_path.open("rb") as f:
-        vk_messages: list[vk.Message] = pickle.load(f)
+    with vk_history_path.open("rb") as f:
+        vk_history = pickle.load(f)
+        assert isinstance(vk_history, vk.ChatHistory)
+        vk_messages: list[vk.Message] = vk_history.messages
     vk_user_ids: list[int] = list({msg.from_id for msg in vk_messages})
     vk_names: list[str] = username_manager.get_full_names(vk_user_ids)
 
