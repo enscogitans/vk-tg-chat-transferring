@@ -1,39 +1,28 @@
 import abc
 import datetime
-import typing
 
-from tg_importer.types import Message
+from tg_importer.types import Message, ChatHistory
 
 
 class Encoder(abc.ABC):
     @abc.abstractmethod
-    def encode(self, messages: typing.List[Message]) -> str: ...
+    def encode(self, history: ChatHistory) -> str: ...
 
 
 class WhatsAppAndroidEncoder(Encoder):
-    def __init__(self, timezone: datetime.tzinfo, is_group: bool):
+    def __init__(self, timezone: datetime.tzinfo):
         super().__init__()
         self.timezone = timezone
-        self.is_group = is_group
 
-    def encode(self, messages: typing.List[Message]) -> str:
-        if not messages:
+    def encode(self, history: ChatHistory) -> str:
+        if not history.messages:
             raise ValueError("No messages provided")
-        if not self.is_group:
-            raise NotImplementedError("Encoder for private messages is not implemented yet")  # TODO: implement it
-        if not all(messages[i-1].ts <= messages[i].ts for i in range(1, len(messages))):
+        if not all(history.messages[i - 1].ts <= history.messages[i].ts for i in range(1, len(history.messages))):
             raise ValueError("Messages must be sorted by timestamp")
-
-        title = "Chat Title"  # Telegram doesn't use it anywhere
-        first_ts_str = self._encode_timestamp(messages[0].ts)
-        chunks: typing.List[str] = [
-            f"{first_ts_str} - You created group \"{title}\"",
-            f"{first_ts_str} - Messages you send to this group are now secured with end-to-end encryption. Tap for more info.",  # noqa: E501
-            # TODO: use dummy message only if chat is empty
-            self._encode_message(Message(
-                ts=messages[0].ts, user="Dummy User", text="Dummy line. Otherwise Telegram ignores first message")),
-        ]
-        chunks += [self._encode_message(message) for message in messages]
+        if not history.is_group and 2 < (users_count := len(set(msg.user for msg in history.messages))):
+            raise ValueError(f"Private chat contains too many users: {users_count}")
+        chunks: list[str] = self._get_initial_messages_chunks(history)
+        chunks += [self._encode_message(message) for message in history.messages]
         chunks.append("")  # Newline in the end. Without it last message may disappear
         return "\n".join(chunks)
 
@@ -51,3 +40,21 @@ class WhatsAppAndroidEncoder(Encoder):
             # TODO: We need to escape the text in case it mimics to header format
             body += message.text
         return f"{header}: {body}"
+
+    def _get_initial_messages_chunks(self, history: ChatHistory) -> list[str]:
+        ts: datetime.datetime = history.messages[0].ts
+        ts_str = self._encode_timestamp(ts)
+        result: list[str]
+        if history.is_group:
+            result = [
+                f"{ts_str} - You created group \"{history.title}\"",  # Actually, this title is not used by Telegram
+                f"{ts_str} - Messages you send to this group are now secured with end-to-end encryption. Tap for more info.",  # noqa: E501
+            ]
+        else:
+            result = [
+                f"{ts_str} - Messages you send to this chat and calls are now secured with end-to-end encryption. Tap for more info.",  # noqa: E501
+            ]
+        user = history.messages[0].user
+        result.append(self._encode_message(  # TODO: investigate when dummy message is necessary
+            Message(ts=ts, user=user, text="Dummy line. Otherwise Telegram ignores first message")))
+        return result

@@ -21,6 +21,10 @@ class ChatHistory:
     title: Optional[str]  # All chats have title
     photo: Optional["Photo"]  # If available
 
+    @property
+    def is_group(self) -> bool:
+        return self.title is not None
+
 
 @dataclass
 class Message:
