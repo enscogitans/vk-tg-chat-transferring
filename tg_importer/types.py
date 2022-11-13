@@ -18,12 +18,12 @@ from pyrogram.raw.types import (
 class ChatHistory:
     messages: list["Message"]
     # Only valid for chats (not private messages):
-    title: Optional[str]  # All chats have title
-    photo: Optional["Photo"]  # If available
+    title_opt: Optional[str]  # All chats have title
+    photo_opt: Optional["Photo"]  # If available
 
     @property
     def is_group(self) -> bool:
-        return self.title is not None
+        return self.title_opt is not None
 
 
 @dataclass

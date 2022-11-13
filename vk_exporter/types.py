@@ -9,8 +9,16 @@ from vk_api.vk_api import VkApiMethod
 class ChatHistory:
     messages: list["Message"]
     # Only valid for chats (not private messages):
-    title: Optional[str]  # All chats have title
-    photo: Optional["Photo"]  # Not all chats have photo
+    title_opt: Optional[str]  # All chats have title
+    photo_opt: Optional["Photo"]  # Not all chats have photo
+
+
+@dataclass(frozen=True)
+class ChatRawHistory:
+    raw_messages: list[dict]
+    title_opt: Optional[str]
+    photo_url_opt: Optional[str]
+    photo_size_opt: Optional[int]
 
 
 @dataclass(frozen=True)

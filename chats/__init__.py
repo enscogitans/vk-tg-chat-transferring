@@ -93,9 +93,9 @@ async def main(parser: argparse.ArgumentParser, args: argparse.Namespace, tg_cli
                     history = pickle.load(file)
                 assert isinstance(history, ChatHistory), history
                 if title is None:
-                    title = history.title
+                    title = history.title_opt
                 if use_photo and photo_path is None:
-                    photo_path = None if history.photo is None else Path(history.photo.path)
+                    photo_path = None if history.photo_opt is None else Path(history.photo_opt.path)
 
             assert title is not None
             async with tg_client:

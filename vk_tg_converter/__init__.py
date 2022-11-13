@@ -80,4 +80,4 @@ def _make_dummy_tg_history(contacts: list[ContactInfo]) -> tg.ChatHistory:
         user = contact.tg_name_opt or contact.vk_name
         text = f"vk: {contact.vk_name}\ntg: {contact.tg_name_opt}"
         tg_messages.append(tg.Message(ts=ts, user=user, text=text))
-    return tg.ChatHistory(messages=tg_messages, title="Chat title", photo=None)
+    return tg.ChatHistory(messages=tg_messages, title_opt="Chat title", photo_opt=None)

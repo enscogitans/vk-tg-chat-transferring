@@ -24,13 +24,13 @@ async def convert_chat_history(
         config.max_video_size_mb, config.video_quality, config.max_video_download_retries, disable_progress_bar)
     converter = MessageConverterV1(config.timezone, username_manager, media_converter)
 
-    photo: Optional[tg.Photo] = None
-    if vk_history.photo is not None:
-        [media] = await media_converter.try_convert([vk_history.photo])
+    photo_opt: Optional[tg.Photo] = None
+    if vk_history.photo_opt is not None:
+        [media] = await media_converter.try_convert([vk_history.photo_opt])
         assert media is None or isinstance(media, tg.Photo)
-        photo = media
+        photo_opt = media
     return tg.ChatHistory(
         messages=await converter.convert(vk_history.messages),
-        title=vk_history.title,
-        photo=photo,
+        title_opt=vk_history.title_opt,
+        photo_opt=photo_opt,
     )

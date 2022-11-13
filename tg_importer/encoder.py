@@ -47,7 +47,7 @@ class WhatsAppAndroidEncoder(Encoder):
         result: list[str]
         if history.is_group:
             result = [
-                f"{ts_str} - You created group \"{history.title}\"",  # Actually, this title is not used by Telegram
+                f"{ts_str} - You created group \"{history.title_opt}\"",  # Actually, this title is not used by Telegram
                 f"{ts_str} - Messages you send to this group are now secured with end-to-end encryption. Tap for more info.",  # noqa: E501
             ]
         else:
