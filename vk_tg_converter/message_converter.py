@@ -166,38 +166,42 @@ class MessageConverterV1(MessageConverter):
 
     def _prepare_service_message(self, msg: vk.Message) -> PreparedMessage:
         assert msg.action is not None
-        user_name: str = self.username_manager.get_full_name(msg.from_id)
+        vk_name: str = self.username_manager.get_full_name(msg.from_id)
+        tg_name_opt: Optional[str] = self.username_manager.try_get_tg_name(msg.from_id)
 
         text: str
         if isinstance(msg.action, vk.CreateChatAction):
-            text = f"{user_name} created chat"
+            text = f"*{vk_name} created chat*"
         elif isinstance(msg.action, vk.UpdateTitleAction):
-            text = f"{user_name} set new title: '{msg.action.new_title}'"
+            text = f"*{vk_name} set new title: '{msg.action.new_title}'*"
         elif isinstance(msg.action, vk.UpdatePhotoAction):
-            text = f"{user_name} set new chat photo"
+            text = f"*{vk_name} set new chat photo*"
         elif isinstance(msg.action, vk.RemovePhotoAction):
-            text = f"{user_name} removed chat photo"
+            text = f"*{vk_name} removed chat photo*"
         elif isinstance(msg.action, vk.JoinByLinkAction):
-            text = f"{user_name} joined chat by link"
+            text = f"*{vk_name} joined chat by link*"
         elif isinstance(msg.action, vk.InviteUserAction):
             new_user_name = self.username_manager.get_full_name(msg.action.invited_user_id)
-            text = f"{user_name} invited {new_user_name}"
+            text = f"*{vk_name} invited {new_user_name}*"
         elif isinstance(msg.action, vk.KickUserAction):
-            kicked_user_name = self.username_manager.get_full_name(msg.action.kicked_user_id)
-            text = f"{user_name} kicked {kicked_user_name}"
+            if msg.action.kicked_user_id == msg.from_id:
+                text = f"*{vk_name} left chat*"
+            else:
+                kicked_user_name = self.username_manager.get_full_name(msg.action.kicked_user_id)
+                text = f"*{vk_name} kicked {kicked_user_name}*"
         elif isinstance(msg.action, vk.PinMessageAction):
-            text = f"{user_name} pinned message"  # TODO: consider using conversation_message_id here
+            text = f"*{vk_name} pinned message*"  # TODO: consider using conversation_message_id here
         elif isinstance(msg.action, vk.UnpinMessageAction):
-            text = f"{user_name} unpinned message"  # TODO: consider using conversation_message_id here
+            text = f"*{vk_name} unpinned message*"  # TODO: consider using conversation_message_id here
         elif isinstance(msg.action, vk.ScreenshotAction):
-            text = f"{user_name} made a screenshot"
+            text = f"*{vk_name} made a screenshot*"
         else:
             assert isinstance(msg.action, vk.UnsupportedAction), msg.action
-            text = f"{user_name} triggered action '{msg.action.action_type}'"
+            text = f"*{vk_name} triggered action '{msg.action.action_type}'*"
 
         return PreparedMessage(
-            vk_name="Service Message",
-            tg_name_opt="Service Message",
+            vk_name=vk_name,
+            tg_name_opt=tg_name_opt,
             date=msg.date,
             reply=None,
             text=text,
