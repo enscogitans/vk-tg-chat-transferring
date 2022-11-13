@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Optional
 
 from pyrogram.enums import ChatType
@@ -15,6 +16,13 @@ async def list_chats(client: TgClient) -> None:
             last_name: str = dialog.chat.last_name or ""
             name = str.strip(first_name + " " + last_name)
         print(f"id={dialog.chat.id: <14}\tname='{name}'")
+
+
+async def set_photo(client: TgClient, chat_id: int, photo_path: Path) -> None:
+    chat = await client.get_chat(chat_id)
+    assert isinstance(chat, Chat), f"You are not a member of the chat {chat_id}"
+    await chat.set_photo(photo=str(photo_path))
+    print(f"Successfully set photo to '{photo_path}'")
 
 
 async def set_is_mute_chat(client: TgClient, chat_id: int, *, is_mute: bool) -> None:
@@ -60,13 +68,16 @@ async def invite_users(client: TgClient, chat_id: int, contacts: list[ContactInf
         print(f"  {i}. tg_name='{c.tg_name_opt}'", f"vk_name='{c.vk_name}'", f"vk_id={c.vk_id}", sep="\t")
 
 
-async def create_chat(client: TgClient, title: str, contacts: list[ContactInfo], mute_all: bool) -> None:
+async def create_chat(client: TgClient, title: str, contacts: list[ContactInfo],
+                      mute_all: bool, photo_path: Optional[Path]) -> None:
     chat = await client.create_supergroup(title)
     print("Created chat with id =", chat.id)
     if mute_all:
         await set_is_mute_chat(client, chat.id, is_mute=True)
     if contacts:
         await invite_users(client, chat.id, contacts)
+    if photo_path is not None:
+        await set_photo(client, chat.id, photo_path)
 
 
 async def _add_users_to_chat(
