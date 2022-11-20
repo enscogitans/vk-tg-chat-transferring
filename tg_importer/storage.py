@@ -4,7 +4,7 @@ from pathlib import Path
 from tg_importer.types import ChatHistory
 
 
-class TgHistoryRepository:
+class TgHistoryStorage:
     @staticmethod
     def save_history(history: ChatHistory, path: Path) -> None:
         with path.open("xb") as f:

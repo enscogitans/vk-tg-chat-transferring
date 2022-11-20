@@ -2,8 +2,8 @@ import argparse
 
 from common import VkClient
 from config import Config
-from tg_importer.repository import TgHistoryRepository
-from vk_exporter.repository import VkHistoryRepository
+from tg_importer.storage import TgHistoryStorage
+from vk_exporter.storage import VkHistoryStorage
 from vk_tg_converter.arguments import ConverterArguments
 from vk_tg_converter.contacts.storage import ContactsStorage
 from vk_tg_converter.controller import ConverterController
@@ -26,8 +26,8 @@ async def main(parser: argparse.ArgumentParser, namespace: argparse.Namespace,
         ContactsStorage(),
         HistoryConverterFactory(vk_api, vk_config),
         DummyHistoryProvider(),
-        VkHistoryRepository(),
-        TgHistoryRepository(),
+        VkHistoryStorage(),
+        TgHistoryStorage(),
     )
 
     controller = ConverterController(service)
