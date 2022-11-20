@@ -36,6 +36,7 @@ async def main(parser: argparse.ArgumentParser, args: argparse.Namespace,
                 parser.error(f"Input file does not exist: '{args.input}'")
             if args.output.exists():
                 parser.error(f"Output file already exists: '{args.output}'")
+            # TODO set ego name
             um = UsernameManagerV1(vk_client.get_api())
             async with tg_client:
                 await make_contacts_mapping_file(args.output, args.input, tg_client, um)

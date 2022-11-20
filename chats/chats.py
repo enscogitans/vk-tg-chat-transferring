@@ -5,7 +5,7 @@ from pyrogram.enums import ChatType
 from pyrogram.types import Chat, User
 
 from common import TgClient
-from vk_tg_converter import ContactInfo
+from vk_tg_converter.contacts.username_manager import ContactInfo
 
 
 async def list_chats(client: TgClient) -> None:

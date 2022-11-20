@@ -4,7 +4,7 @@ from pathlib import Path
 from vk_exporter.types import ChatHistory, ChatRawHistory
 
 
-class HistoryRepository:
+class VkHistoryRepository:
     @staticmethod
     def save_raw_history(raw_history: ChatRawHistory, path: Path) -> None:
         with path.open("xb") as f:

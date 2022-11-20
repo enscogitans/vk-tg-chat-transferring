@@ -4,8 +4,8 @@ from common.vk_client import VkClient
 from config import Config
 from vk_exporter.arguments import ExporterArguments
 from vk_exporter.controller import ExporterController
+from vk_exporter.repository import VkHistoryRepository
 from vk_exporter.service import ExporterService
-from vk_exporter.repository import HistoryRepository
 from vk_exporter.vk_service import VkService
 
 
@@ -17,7 +17,7 @@ def main(parser: argparse.ArgumentParser, namespace: argparse.Namespace, config:
     args = ExporterArguments(parser, namespace, config)
     service = ExporterService(
         VkService(vk_client.get_api()),
-        HistoryRepository(),
+        VkHistoryRepository(),
     )
     controller = ExporterController(service)
     controller(args)

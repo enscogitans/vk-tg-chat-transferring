@@ -15,19 +15,17 @@ from vk_api.vk_api import VkApiMethod
 
 import tg_importer.types as tg
 import vk_exporter.types as vk
-from vk_tg_converter.video_downloader import VideoDownloader
+from config import Config
+from vk_tg_converter.converters.video_downloader import VideoDownloader
 
 
 class MediaConverter(abc.ABC):
     @abc.abstractmethod
-    async def try_convert(self, attachments: list[vk.Attachment]) -> list[Optional[tg.Media]]: ...
+    async def try_convert(self, attachments: list[vk.Attachment]) -> list[None | tg.Media]: ...
 
 
 class MediaConverterV1(MediaConverter):
-    def __init__(self, api: VkApiMethod, export_dir: Path,
-                 max_video_workers: int, max_non_video_workers: int,
-                 max_video_size_mb: int, video_quality: str, video_download_retries: int,
-                 disable_progress_bar: bool) -> None:
+    def __init__(self, api: VkApiMethod, export_dir: Path, vk_config: Config.Vk, disable_progress_bar: bool) -> None:
         export_dir.mkdir(parents=True, exist_ok=True)
         if any(True for _ in export_dir.iterdir()):
             raise ValueError(f"Directory is not empty: {export_dir}")
@@ -35,17 +33,18 @@ class MediaConverterV1(MediaConverter):
         self.api = api
         self.n_files_demanded = 0
 
-        self.max_video_workers = max_video_workers
-        self.video_download_semaphore = asyncio.Semaphore(max_video_workers)
-        self.non_video_download_semaphore = asyncio.Semaphore(max_non_video_workers)
+        self.max_video_workers = vk_config.max_video_workers
+        self.video_download_semaphore = asyncio.Semaphore(self.max_video_workers)
+        self.non_video_download_semaphore = asyncio.Semaphore(vk_config.max_non_video_workers)
         self.disable_progress_bar = disable_progress_bar
 
         allowed_formats = ["mp4", "flv", "ogg", "mkv", "avi"]  # I'm not sure telegram supports them all
         conversion_format = "mp4"
         self.video_downloader = VideoDownloader(
-            allowed_formats, conversion_format, max_video_size_mb, video_quality, video_download_retries)
+            allowed_formats, conversion_format, vk_config.max_video_size_mb,
+            vk_config.video_quality, vk_config.max_video_download_retries)
 
-    async def try_convert(self, attachments: list[vk.Attachment]) -> list[Optional[tg.Media]]:
+    async def try_convert(self, attachments: list[vk.Attachment]) -> list[None | tg.Media]:
         result: list[Optional[tg.Media]] = [None] * len(attachments)
 
         videos_with_idx: list[tuple[vk.Video, int]] = []

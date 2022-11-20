@@ -9,7 +9,7 @@ import tg_importer.types as tg
 import vk_exporter.types as vk
 from common import Sentinel
 from vk_tg_converter.contacts.username_manager import UsernameManager
-from vk_tg_converter.media_converter import MediaConverter
+from vk_tg_converter.converters.media_converter import MediaConverter
 
 
 class MessageConverter(abc.ABC):

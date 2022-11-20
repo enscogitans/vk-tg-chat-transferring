@@ -1,13 +1,13 @@
 from pathlib import Path
 from typing import Optional
 
-from vk_exporter.repository import HistoryRepository
+from vk_exporter.repository import VkHistoryRepository
 from vk_exporter.types import ChatHistory, Message, Photo, ChatRawHistory
 from vk_exporter.vk_service import VkService
 
 
 class ExporterService:
-    def __init__(self, vk_service: VkService, repository: HistoryRepository) -> None:
+    def __init__(self, vk_service: VkService, repository: VkHistoryRepository) -> None:
         self.vk_service = vk_service
         self.repository = repository
 

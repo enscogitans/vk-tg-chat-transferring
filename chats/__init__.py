@@ -7,7 +7,8 @@ from chats.chats import list_chats, create_chat, set_is_mute_chat, invite_users,
 from common import TgClient, Sentinel
 from config import Config
 from tg_importer.types import ChatHistory
-from vk_tg_converter import load_contacts_from_yaml, ContactInfo
+from vk_tg_converter.contacts.contacts_preprocessor import load_contacts_from_yaml
+from vk_tg_converter.contacts.username_manager import ContactInfo
 
 
 def fill_parser(parser: argparse.ArgumentParser, config: Config) -> None:
@@ -65,6 +66,7 @@ async def main(parser: argparse.ArgumentParser, args: argparse.Namespace, tg_cli
             async with tg_client:
                 await invite_users(tg_client, args.chat, contacts_to_invite)
         case "create":
+            # TODO: get contacts from history file
             contacts_to_invite = []
             if args.invite is not None:
                 contacts_mapping_file = args.invite

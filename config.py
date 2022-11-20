@@ -32,6 +32,8 @@ class Config:
             self.client_name = "tg"
             self.max_simultaneously_uploaded_files = 10
             self.timezone = _get_local_timezone()
+            self.allowed_video_formats = ["mp4", "flv", "ogg", "mkv", "avi"]  # I'm not sure telegram supports them all
+            self.video_conversion_format = "mp4"  # All unsupported videos will be converted to this format
 
         @property
         def api_id(self) -> str:

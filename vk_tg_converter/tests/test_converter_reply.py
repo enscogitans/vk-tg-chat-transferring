@@ -2,7 +2,7 @@ import datetime
 
 from tg_importer import types as tg
 from vk_exporter import types as vk
-from vk_tg_converter.message_converter import MessageConverterV1
+from vk_tg_converter.converters.message_converter import MessageConverterV1
 from vk_tg_converter.tests.common import data_dir, make_ts
 
 
