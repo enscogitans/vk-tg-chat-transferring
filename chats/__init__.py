@@ -7,8 +7,12 @@ from chats.chats import list_chats, create_chat, set_is_mute_chat, invite_users,
 from common import TgClient, Sentinel
 from config import Config
 from tg_importer.types import ChatHistory
-from vk_tg_converter.contacts.contacts_preprocessor import load_contacts_from_yaml
+from vk_tg_converter.contacts.storage import ContactsStorage
 from vk_tg_converter.contacts.username_manager import ContactInfo
+
+
+def load_contacts_from_yaml(file_path: Path, *, empty_as_none: bool = True) -> list[ContactInfo]:
+    return ContactsStorage.load_contacts(file_path, empty_as_none=empty_as_none)
 
 
 def fill_parser(parser: argparse.ArgumentParser, config: Config) -> None:

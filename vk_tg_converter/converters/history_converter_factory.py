@@ -5,8 +5,7 @@ from typing import Optional
 from vk_api.vk_api import VkApiMethod
 
 from config import Config
-from vk_tg_converter.contacts import UsernameManagerV1
-from vk_tg_converter.contacts.username_manager import ContactInfo
+from vk_tg_converter.contacts.username_manager import ContactInfo, UsernameManagerV1
 from vk_tg_converter.converters.media_converter import MediaConverterV1
 from vk_tg_converter.converters.message_converter import MessageConverterV1
 from vk_tg_converter.converters.history_converter import IHistoryConverter, HistoryConverter
