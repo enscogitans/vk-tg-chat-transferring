@@ -7,7 +7,7 @@ from config import Config
 
 
 @dataclass
-class ExporterArguments:
+class VkExporterArguments:
     is_raw_export: bool
     export_file: Path
     is_disable_progress_bar: bool

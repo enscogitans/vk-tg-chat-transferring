@@ -6,7 +6,7 @@ from vk_exporter.types import ChatHistory, Message, Photo, ChatRawHistory
 from vk_exporter.vk_service import IVkService
 
 
-class IExporterService(abc.ABC):
+class IVkExporterService(abc.ABC):
     @abc.abstractmethod
     def export_history(self, peer_id: int, max_messages: None | int,
                        disable_progress_bar: bool, export_path: Path) -> None: ...
@@ -19,7 +19,7 @@ class IExporterService(abc.ABC):
     def export_history_from_raw_input(self, raw_input_path: Path, export_path: Path) -> None: ...
 
 
-class ExporterService(IExporterService):
+class VkExporterService(IVkExporterService):
     def __init__(self, vk_service: IVkService, storage: IVkHistoryStorage) -> None:
         self.vk_service = vk_service
         self.storage = storage
