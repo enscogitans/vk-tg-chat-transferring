@@ -3,7 +3,7 @@ import argparse
 from chats.arguments import get_arguments
 from chats.controller import ChatsController
 from chats.service import ChatsService
-from common import TgClient
+from common.tg_client import TgClient
 from tg_importer.storage import TgHistoryStorage
 from vk_tg_converter.contacts.storage import ContactsStorage
 

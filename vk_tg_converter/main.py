@@ -1,6 +1,6 @@
 import argparse
 
-from common import VkClient
+from common.vk_client import VkClient
 from config import Config
 from tg_importer.storage import TgHistoryStorage
 from vk_exporter.storage import VkHistoryStorage

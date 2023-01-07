@@ -1,6 +1,6 @@
 import argparse
 
-from common import TgClient
+from common.tg_client import TgClient
 from config import Config
 from tg_importer.arguments import TgImporterArguments
 from tg_importer.controller import TgImporterController

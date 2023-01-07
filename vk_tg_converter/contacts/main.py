@@ -1,6 +1,7 @@
 import argparse
 
-from common import VkClient, TgClient
+from common.tg_client import TgClient
+from common.vk_client import VkClient
 from vk_exporter.storage import VkHistoryStorage
 from vk_tg_converter.contacts.arguments import get_arguments
 from vk_tg_converter.contacts.controller import ContactsController

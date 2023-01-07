@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TypeAlias, Union
 
-from common import Sentinel
+from common.sentinel import Sentinel
 from config import Config
 from tg_importer.storage import TgHistoryStorage
 

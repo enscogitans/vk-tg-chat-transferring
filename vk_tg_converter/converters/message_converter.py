@@ -7,7 +7,7 @@ from typing import Literal, Optional, Union
 
 import tg_importer.types as tg
 import vk_exporter.types as vk
-from common import Sentinel
+from common.sentinel import Sentinel
 from vk_tg_converter.contacts.username_manager import UsernameManager
 from vk_tg_converter.converters.media_converter import MediaConverter
 

@@ -1,19 +1,15 @@
 from pathlib import Path
 
 import vk_exporter.types as vk
-from common import TgClient
+from common.tg_client import TgClient
+from common.utils import get_full_name
 from vk_exporter.storage import VkHistoryStorage
 from vk_tg_converter.contacts.storage import ContactsStorage
 from vk_tg_converter.contacts.username_manager import UsernameManager, ContactInfo
 
 
 async def _get_contacts_names_saved_in_telegram(tg_client: TgClient) -> set[str]:
-    tg_contacts_names: set[str] = set()
-    for contact in await tg_client.get_contacts():
-        first_name: str = contact.first_name or ""
-        last_name: str = contact.last_name or ""
-        tg_contacts_names.add(str.strip(first_name + " " + last_name))
-    return tg_contacts_names
+    return {get_full_name(contact) for contact in await tg_client.get_contacts()}
 
 
 class ContactsService:

@@ -8,7 +8,8 @@ import tg_importer
 import vk_exporter
 import vk_tg_converter
 import vk_tg_converter.contacts
-from common import TgClient, VkClient
+from common.tg_client import TgClient
+from common.vk_client import VkClient
 from config import Config
 
 

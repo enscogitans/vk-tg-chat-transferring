@@ -2,18 +2,12 @@ from pathlib import Path
 from typing import Optional
 
 from pyrogram.enums import ChatType
-from pyrogram.types import Chat, User
+from pyrogram.types import Chat
 
-from common import TgClient
+from common.tg_client import TgClient
+from common.utils import get_full_name
 from vk_tg_converter.contacts.storage import ContactsStorage
 from vk_tg_converter.contacts.username_manager import ContactInfo
-
-
-def _make_name(tg_user: User) -> str:
-    # TODO: move to common
-    first_name: str = tg_user.first_name or ""
-    last_name: str = tg_user.last_name or ""
-    return str.strip(first_name + " " + last_name)
 
 
 class ChatsService:
@@ -23,11 +17,7 @@ class ChatsService:
 
     async def list_chats(self) -> None:
         async for dialog in self.tg_client.get_dialogs():  # type: ignore
-            name: str = dialog.chat.title or ""
-            if not name:
-                first_name: str = dialog.chat.first_name or ""
-                last_name: str = dialog.chat.last_name or ""
-                name = str.strip(first_name + " " + last_name)
+            name = dialog.chat.title or get_full_name(dialog.chat)
             print(f"id={dialog.chat.id: <14}\tname='{name}'")
 
     async def set_photo(self, chat_id: int, photo_path: Path) -> None:
@@ -97,7 +87,7 @@ class ChatsService:
 
         chat_members_generator = self.tg_client.get_chat_members(chat_id)
         assert chat_members_generator is not None
-        chat_members_names: set[str] = {_make_name(member.user) async for member in chat_members_generator}
+        chat_members_names: set[str] = {get_full_name(member.user) async for member in chat_members_generator}
         added_contacts = [contact for contact in contacts if contact.tg_name_opt in chat_members_names]
         missing_contacts = [contact for contact in contacts if contact.tg_name_opt not in chat_members_names]
         return added_contacts, missing_contacts
@@ -107,7 +97,7 @@ class ChatsService:
         tg_name_to_id: dict[str, None | int] = dict.fromkeys(c.tg_name_opt for c in prepared_contacts if c.tg_name_opt)
 
         for contact in await self.tg_client.get_contacts():
-            name = _make_name(contact)
+            name = get_full_name(contact)
             if name in tg_name_to_id:
                 assert tg_name_to_id[name] is None, f"'{name}' appears in contacts several times"
                 tg_name_to_id[name] = contact.id
