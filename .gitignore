@@ -1,6 +1,14 @@
-env
-*.session
-*.pickle
 __pycache__
 .pytest_cache
 .idea
+
+# tokens for vk and telegram api
+/env
+# vk and telegram session files
+/*.session
+# files with chat history
+/*.pickle
+# files with contacts mapping
+/*.yaml
+# directory where media files are exported
+/exported_media
