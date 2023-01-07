@@ -17,14 +17,14 @@ def fill_parser(parser: argparse.ArgumentParser, config: Config) -> None:
 
 
 async def main(parser: argparse.ArgumentParser, namespace: argparse.Namespace,
-               vk_config: Config.Vk, vk_client: VkClient) -> None:
+               config: Config, vk_client: VkClient) -> None:
     args = ConverterArguments(parser, namespace)
 
     vk_api = vk_client.get_api()
     service = ConverterService(
-        vk_config,
+        config.vk,
         ContactsStorage(),
-        HistoryConverterFactory(vk_api, vk_config),
+        HistoryConverterFactory(vk_api, config),
         DummyHistoryProvider(),
         VkHistoryStorage(),
         TgHistoryStorage(),

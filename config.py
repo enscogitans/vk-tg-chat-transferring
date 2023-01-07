@@ -16,7 +16,7 @@ class Config:
     def __init__(self, config_file_path: Optional[PurePath] = PurePath("env")) -> None:
         env: envparse.Env = envparse.Env()  # If config_file_path is None, read from environment
         if config_file_path is not None:
-            env.read_envfile(config_file_path)  # Read everything from file (no overrides)
+            env.read_envfile(config_file_path)  # Read everything from file (from scratch)
 
         self.tg = Config.Telegram(env)
         self.vk = Config.Vk(env)

@@ -45,7 +45,7 @@ async def main() -> None:
         case "contacts":
             await vk_tg_converter.contacts.main(contacts_parser, args, VkClient(config.vk), TgClient(config.tg))
         case "convert":
-            await vk_tg_converter.main(convert_parser, args, config.vk, VkClient(config.vk))
+            await vk_tg_converter.main(convert_parser, args, config, VkClient(config.vk))
         case "chats":
             await chats.main(chats_parser, args, TgClient(config.tg))
         case "import":

@@ -9,6 +9,7 @@ from vk_tg_converter.contacts.username_manager import ContactInfo, UsernameManag
 from vk_tg_converter.converters.media_converter import MediaConverterV1
 from vk_tg_converter.converters.message_converter import MessageConverterV1
 from vk_tg_converter.converters.history_converter import IHistoryConverter, HistoryConverter
+from vk_tg_converter.converters.video_downloader import VideoDownloader
 
 
 class IHistoryConverterFactory(abc.ABC):
@@ -18,13 +19,17 @@ class IHistoryConverterFactory(abc.ABC):
 
 
 class HistoryConverterFactory(IHistoryConverterFactory):
-    def __init__(self, vk_api: VkApiMethod, vk_config: Config.Vk) -> None:
+    def __init__(self, vk_api: VkApiMethod, config: Config) -> None:
         self.vk_api = vk_api
-        self.vk_config = vk_config
+        self.config = config
 
     def create(self, contacts: Optional[list[ContactInfo]],
                media_export_dir: Path, disable_progress_bar: bool) -> IHistoryConverter:
         username_manager = UsernameManagerV1(self.vk_api, contacts)
-        media_converter = MediaConverterV1(self.vk_api, media_export_dir, self.vk_config, disable_progress_bar)
-        message_converter = MessageConverterV1(self.vk_config.timezone, username_manager, media_converter)
+        video_downloader = VideoDownloader(
+            self.config.tg.allowed_video_formats, self.config.tg.video_conversion_format,
+            self.config.vk.max_video_size_mb, self.config.vk.video_quality, self.config.vk.max_video_download_retries)
+        media_converter = MediaConverterV1(
+            self.vk_api, video_downloader, media_export_dir, self.config, disable_progress_bar)
+        message_converter = MessageConverterV1(self.config.vk.timezone, username_manager, media_converter)
         return HistoryConverter(message_converter, media_converter)
