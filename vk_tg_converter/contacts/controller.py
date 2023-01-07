@@ -1,10 +1,10 @@
 from vk_tg_converter.contacts.arguments import ContactsArguments, \
     ContactsListArguments, ContactsPrepareArguments, ContactsCheckArguments
-from vk_tg_converter.contacts.service import ContactsService
+from vk_tg_converter.contacts.service import IContactsService
 
 
 class ContactsController:
-    def __init__(self, service: ContactsService) -> None:
+    def __init__(self, service: IContactsService) -> None:
         self.service = service
 
     async def __call__(self, args: ContactsArguments) -> None:

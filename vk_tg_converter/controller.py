@@ -1,9 +1,9 @@
 from vk_tg_converter.arguments import ConverterArguments
-from vk_tg_converter.service import ConverterService
+from vk_tg_converter.service import IConverterService
 
 
 class ConverterController:
-    def __init__(self, service: ConverterService) -> None:
+    def __init__(self, service: IConverterService) -> None:
         self.service = service
 
     async def __call__(self, args: ConverterArguments) -> None:

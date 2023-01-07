@@ -1,11 +1,11 @@
 from chats.arguments import ChatsArguments, \
     ChatsListArguments, ChatsSetPhotoArguments, ChatsMuteArguments, \
     ChatsUnmuteArguments, ChatsInviteArguments, ChatsCreateArguments
-from chats.service import ChatsService
+from chats.service import IChatsService
 
 
 class ChatsController:
-    def __init__(self, service: ChatsService) -> None:
+    def __init__(self, service: IChatsService) -> None:
         self.service = service
 
     async def __call__(self, args: ChatsArguments) -> None:
@@ -21,4 +21,4 @@ class ChatsController:
             await self.service.invite_users(args.chat_id, args.contacts_path)
         else:
             assert isinstance(args, ChatsCreateArguments), f"Unknown argument {args}"
-            await self.service.create_chat(args.title, args.contacts_to_invite_path, args.is_mute, args.photo_path)
+            await self.service.create_chat(args.title, args.photo_path, args.contacts_to_invite_path, args.is_mute)

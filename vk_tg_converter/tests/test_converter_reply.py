@@ -2,7 +2,7 @@ import datetime
 
 from tg_importer import types as tg
 from vk_exporter import types as vk
-from vk_tg_converter.converters.message_converter import MessageConverterV1
+from vk_tg_converter.converters.message_converter import MessageConverter
 from vk_tg_converter.tests.common import data_dir, make_ts
 
 
@@ -23,7 +23,7 @@ async def test_simple_reply(converter):
 
 async def test_timezone(username_manager, media_converter):
     tz = datetime.timezone(datetime.timedelta(hours=3))
-    converter = MessageConverterV1(tz, username_manager, media_converter)
+    converter = MessageConverter(tz, username_manager, media_converter)
 
     vk_msg_1 = vk.Message(date=make_ts(0, 0), from_id=100, text="Hi")
     vk_msg_2 = vk.Message(date=make_ts(0, 1), from_id=101, text="Hello", reply_message=vk_msg_1)

@@ -1,3 +1,4 @@
+import abc
 import asyncio
 import io
 from pathlib import Path
@@ -11,13 +12,18 @@ from tqdm.asyncio import tqdm
 
 import tg_importer.types as tg
 from common.tg_client import TgClient
-from tg_importer.encoder import Encoder
-from tg_importer.storage import TgHistoryStorage
+from tg_importer.encoder import IEncoder
+from tg_importer.storage import ITgHistoryStorage
 
 
-class TgImporterService:
-    def __init__(self, tg_client: TgClient, tg_history_storage: TgHistoryStorage,
-                 encoder: Encoder, max_simultaneously_uploaded_files: int) -> None:
+class ITgImporterService(abc.ABC):
+    @abc.abstractmethod
+    async def import_history(self, chat_id: int, tg_history_path: Path, disable_progress_bar: bool) -> None: ...
+
+
+class TgImporterService(ITgImporterService):
+    def __init__(self, tg_client: TgClient, tg_history_storage: ITgHistoryStorage,
+                 encoder: IEncoder, max_simultaneously_uploaded_files: int) -> None:
         self.tg_client = tg_client
         self.tg_history_storage = tg_history_storage
         self.encoder = encoder

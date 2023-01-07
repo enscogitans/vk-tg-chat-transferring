@@ -6,10 +6,10 @@ import pytest
 
 from tg_importer import types as tg
 from vk_exporter import types as vk
-from vk_tg_converter.converters.message_converter import MessageConverterV1, MediaConverter, UsernameManager
+from vk_tg_converter.converters.message_converter import MessageConverter, IMediaConverter, IUsernameManager
 
 
-class FakeUsernameManager(UsernameManager):
+class FakeUsernameManager(IUsernameManager):
     def get_full_names(self, vk_user_ids):
         return list(map(self.get_full_name, vk_user_ids))
 
@@ -20,7 +20,7 @@ class FakeUsernameManager(UsernameManager):
         return f"Tg {vk_user_id}"
 
 
-class FakeMediaConverter(MediaConverter):
+class FakeMediaConverter(IMediaConverter):
     def __init__(self):
         super().__init__()
         self.conversion_results: Dict[vk.Attachment, Optional[tg.Media]] = {}
@@ -44,7 +44,7 @@ def media_converter():
 
 @pytest.fixture
 def converter(username_manager, media_converter):
-    return MessageConverterV1(timezone.utc, username_manager, media_converter)
+    return MessageConverter(timezone.utc, username_manager, media_converter)
 
 
 """

@@ -16,16 +16,16 @@ from vk_api.vk_api import VkApiMethod
 import tg_importer.types as tg
 import vk_exporter.types as vk
 from config import Config
-from vk_tg_converter.converters.video_downloader import VideoDownloader
+from vk_tg_converter.converters.video_downloader import IVideoDownloader
 
 
-class MediaConverter(abc.ABC):
+class IMediaConverter(abc.ABC):
     @abc.abstractmethod
     async def try_convert(self, attachments: list[vk.Attachment]) -> list[None | tg.Media]: ...
 
 
-class MediaConverterV1(MediaConverter):
-    def __init__(self, api: VkApiMethod, video_downloader: VideoDownloader,
+class MediaConverter(IMediaConverter):
+    def __init__(self, api: VkApiMethod, video_downloader: IVideoDownloader,
                  export_dir: Path, config: Config, disable_progress_bar: bool) -> None:
         export_dir.mkdir(parents=True, exist_ok=True)
         if any(True for _ in export_dir.iterdir()):

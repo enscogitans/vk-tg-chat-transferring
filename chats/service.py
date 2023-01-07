@@ -1,17 +1,35 @@
+import abc
 from pathlib import Path
-from typing import Optional
 
 from pyrogram.enums import ChatType
 from pyrogram.types import Chat
 
 from common.tg_client import TgClient
 from common.utils import get_full_name
-from vk_tg_converter.contacts.storage import ContactsStorage
+from vk_tg_converter.contacts.storage import IContactsStorage
 from vk_tg_converter.contacts.username_manager import ContactInfo
 
 
-class ChatsService:
-    def __init__(self, tg_client: TgClient, contacts_storage: ContactsStorage) -> None:
+class IChatsService(abc.ABC):
+    @abc.abstractmethod
+    async def list_chats(self) -> None: ...
+
+    @abc.abstractmethod
+    async def set_photo(self, chat_id: int, photo_path: Path) -> None: ...
+
+    @abc.abstractmethod
+    async def set_is_mute_chat(self, chat_id: int, *, is_mute: bool) -> None: ...
+
+    @abc.abstractmethod
+    async def invite_users(self, chat_id: int, contacts_path: Path) -> None: ...
+
+    @abc.abstractmethod
+    async def create_chat(self, title: str, photo_path: None | Path,
+                          contacts_path: None | Path, mute_all: bool) -> None: ...
+
+
+class ChatsService(IChatsService):
+    def __init__(self, tg_client: TgClient, contacts_storage: IContactsStorage) -> None:
         self.tg_client = tg_client
         self.contacts_storage = contacts_storage
 
@@ -68,20 +86,20 @@ class ChatsService:
         for i, c in enumerate(added_contacts, start=1):
             print(f"  {i}. tg_name='{c.tg_name_opt}'", f"vk_name='{c.vk_name}'", f"vk_id={c.vk_id}", sep="\t")
 
-    async def create_chat(self, title: str, contacts_path: Optional[Path],
-                          mute_all: bool, photo_path: Optional[Path]) -> None:
+    async def create_chat(self, title: str, photo_path: None | Path,
+                          contacts_path: None | Path, mute_all: bool) -> None:
         chat = await self.tg_client.create_supergroup(title)
         print("Created chat with id =", chat.id)
         if mute_all:
             await self.set_is_mute_chat(chat.id, is_mute=True)
-        if contacts_path is not None:
-            await self.invite_users(chat.id, contacts_path)
         if photo_path is not None:
             await self.set_photo(chat.id, photo_path)
+        if contacts_path is not None:
+            await self.invite_users(chat.id, contacts_path)
 
     async def _add_users_to_chat(
             self, chat_id: int, contacts: list[ContactInfo]) -> tuple[list[ContactInfo], list[ContactInfo]]:
-        contact_to_id: dict[ContactInfo, Optional[int]] = await self._get_contact_to_user_id_mapping(contacts)
+        contact_to_id: dict[ContactInfo, None | int] = await self._get_contact_to_user_id_mapping(contacts)
         user_ids_to_add: list[int] = [user_id for user_id in contact_to_id.values() if user_id is not None]
         await self.tg_client.add_chat_members(chat_id, user_ids_to_add)  # type: ignore
 

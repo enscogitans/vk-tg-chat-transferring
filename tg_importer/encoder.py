@@ -4,12 +4,12 @@ import datetime
 from tg_importer.types import Message, ChatHistory
 
 
-class Encoder(abc.ABC):
+class IEncoder(abc.ABC):
     @abc.abstractmethod
     def encode(self, history: ChatHistory) -> str: ...
 
 
-class WhatsAppAndroidEncoder(Encoder):
+class WhatsAppAndroidEncoder(IEncoder):
     def __init__(self, timezone: datetime.tzinfo):
         super().__init__()
         self.timezone = timezone

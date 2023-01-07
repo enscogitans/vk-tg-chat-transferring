@@ -8,24 +8,24 @@ from typing import Literal, Optional, Union
 import tg_importer.types as tg
 import vk_exporter.types as vk
 from common.sentinel import Sentinel
-from vk_tg_converter.contacts.username_manager import UsernameManager
-from vk_tg_converter.converters.media_converter import MediaConverter
+from vk_tg_converter.contacts.username_manager import IUsernameManager
+from vk_tg_converter.converters.media_converter import IMediaConverter
 
 
-class MessageConverter(abc.ABC):
+class IMessageConverter(abc.ABC):
     @abc.abstractmethod
     async def convert(self, messages: list[vk.Message]) -> list[tg.Message]: ...
 
 
 @dataclass
-class PreparedMessage:
+class _PreparedMessage:
     vk_name: str
     tg_name_opt: Optional[str]  # If available
     date: datetime
-    reply: Optional["PreparedMessage"]
+    reply: Optional["_PreparedMessage"]
     text: str
-    forwards: list["PreparedMessage"]
-    attachments: list["PreparedAttachment"]
+    forwards: list["_PreparedMessage"]
+    attachments: list["_PreparedAttachment"]
 
     def __post_init__(self) -> None:
         assert self.reply is None or not self.forwards, \
@@ -34,7 +34,7 @@ class PreparedMessage:
 
 
 @dataclass
-class PreparedAttachment:
+class _PreparedAttachment:
     attachment: vk.Attachment
     alternative_text_need_newline_before_header: bool
     alternative_text_header: str
@@ -44,8 +44,8 @@ class PreparedAttachment:
     converted_media_opt: Union[Sentinel, None, tg.Media] = Sentinel()
 
 
-class MessageConverterV1(MessageConverter):
-    def __init__(self, vk_timezone: tzinfo, username_manager: UsernameManager, media_converter: MediaConverter):
+class MessageConverter(IMessageConverter):
+    def __init__(self, vk_timezone: tzinfo, username_manager: IUsernameManager, media_converter: IMediaConverter):
         self.vk_timezone = vk_timezone
         self.username_manager = username_manager
         self.media_converter = media_converter
@@ -59,7 +59,7 @@ class MessageConverterV1(MessageConverter):
             result += self._convert_one_message(msg)
         return result
 
-    def _prepare_message(self, msg: vk.Message) -> PreparedMessage:
+    def _prepare_message(self, msg: vk.Message) -> _PreparedMessage:
         if msg.action is not None:
             return self._prepare_service_message(msg)
         text = self._prepare_text(msg)
@@ -67,7 +67,7 @@ class MessageConverterV1(MessageConverter):
         forwards = list(map(self._prepare_message, msg.fwd_messages))
         if not (text or attachments or forwards):
             text = "*empty message*"
-        return PreparedMessage(
+        return _PreparedMessage(
             vk_name=self.username_manager.get_full_name(msg.from_id),
             tg_name_opt=self.username_manager.try_get_tg_name(msg.from_id),
             date=msg.date,
@@ -77,25 +77,25 @@ class MessageConverterV1(MessageConverter):
             forwards=forwards,
         )
 
-    async def _convert_media_in_messages(self, messages: list[PreparedMessage]) -> None:
+    async def _convert_media_in_messages(self, messages: list[_PreparedMessage]) -> None:
         """This function does not convert media in nested messages"""
-        prepared_attachments: list[PreparedAttachment] = list(chain.from_iterable(msg.attachments for msg in messages))
+        prepared_attachments: list[_PreparedAttachment] = list(chain.from_iterable(msg.attachments for msg in messages))
         conversion_results: list[Optional[tg.Media]] = \
             await self.media_converter.try_convert([pa.attachment for pa in prepared_attachments])
         for attch, media_opt in zip(prepared_attachments, conversion_results):
             attch.converted_media_opt = media_opt
 
     @staticmethod
-    def _prepare_attachments(msg: vk.Message) -> list[PreparedAttachment]:
-        result: list[PreparedAttachment] = []
+    def _prepare_attachments(msg: vk.Message) -> list[_PreparedAttachment]:
+        result: list[_PreparedAttachment] = []
         for attch in msg.attachments:
-            if not MessageConverterV1._should_skip_attachment(attch, msg.text):
+            if not MessageConverter._should_skip_attachment(attch, msg.text):
                 need_newline, header, header_extra_info, body = \
-                    MessageConverterV1._prepare_alternative_text_for_attachment(attch)
-                result.append(PreparedAttachment(attch, need_newline, header, header_extra_info, body))
+                    MessageConverter._prepare_alternative_text_for_attachment(attch)
+                result.append(_PreparedAttachment(attch, need_newline, header, header_extra_info, body))
         return result
 
-    def _convert_one_message(self, msg: PreparedMessage) -> list[tg.Message]:
+    def _convert_one_message(self, msg: _PreparedMessage) -> list[tg.Message]:
         result: list[tg.Message] = []
         tg_name: str = msg.tg_name_opt or msg.vk_name
 
@@ -141,7 +141,7 @@ class MessageConverterV1(MessageConverter):
         ]
         return result
 
-    def _reply_as_text_lines(self, msg: PreparedMessage) -> list[str]:
+    def _reply_as_text_lines(self, msg: _PreparedMessage) -> list[str]:
         header: list[str] = self._make_message_header(msg, "Reply")
         # Inner replies are skipped
         body: list[str] = self._cut_text(msg.text, max_len=120, max_lines=3)
@@ -149,7 +149,7 @@ class MessageConverterV1(MessageConverter):
             body.append(attachments_line)
         return header + self._shift_lines(body)
 
-    def _inner_message_as_text_lines(self, msg: PreparedMessage, msg_type: Literal["Reply", "Forward"]) -> list[str]:
+    def _inner_message_as_text_lines(self, msg: _PreparedMessage, msg_type: Literal["Reply", "Forward"]) -> list[str]:
         header: list[str] = self._make_message_header(msg, msg_type)
         body: list[str] = []
         if msg.reply is not None:
@@ -164,7 +164,7 @@ class MessageConverterV1(MessageConverter):
             body += self._inner_message_as_text_lines(forward, "Forward")
         return header + self._shift_lines(body)
 
-    def _prepare_service_message(self, msg: vk.Message) -> PreparedMessage:
+    def _prepare_service_message(self, msg: vk.Message) -> _PreparedMessage:
         assert msg.action is not None
         vk_name: str = self.username_manager.get_full_name(msg.from_id)
         tg_name_opt: Optional[str] = self.username_manager.try_get_tg_name(msg.from_id)
@@ -199,7 +199,7 @@ class MessageConverterV1(MessageConverter):
             assert isinstance(msg.action, vk.UnsupportedAction), msg.action
             text = f"*{vk_name} triggered action '{msg.action.action_type}'*"
 
-        return PreparedMessage(
+        return _PreparedMessage(
             vk_name=vk_name,
             tg_name_opt=tg_name_opt,
             date=msg.date,
@@ -210,9 +210,9 @@ class MessageConverterV1(MessageConverter):
         )
 
     @staticmethod
-    def _attachment_as_text_lines(attachment: PreparedAttachment) -> list[str]:
+    def _attachment_as_text_lines(attachment: _PreparedAttachment) -> list[str]:
         result: list[str] = [attachment.alternative_text_header + attachment.alternative_text_header_extra_info]
-        result += MessageConverterV1._shift_lines(attachment.alternative_text_body)
+        result += MessageConverter._shift_lines(attachment.alternative_text_body)
         return result
 
     @staticmethod
@@ -300,7 +300,7 @@ class MessageConverterV1(MessageConverter):
                 return True
         return False
 
-    def _make_message_header(self, msg: PreparedMessage, msg_type: Literal["Reply", "Forward"]) -> list[str]:
+    def _make_message_header(self, msg: _PreparedMessage, msg_type: Literal["Reply", "Forward"]) -> list[str]:
         date_str = msg.date.astimezone(self.vk_timezone).strftime("%d.%m.%y, %H:%M")  # 17.07.14, 16:20
         return [
             f"[{msg_type}] {date_str}",
@@ -329,7 +329,7 @@ class MessageConverterV1(MessageConverter):
         return lines
 
     @staticmethod
-    def _make_line_with_forwards_and_attachments(msg: PreparedMessage, max_items: int) -> str:
+    def _make_line_with_forwards_and_attachments(msg: _PreparedMessage, max_items: int) -> str:
         items: list[str] = ["[Forward]"] * len(msg.forwards)
         items.extend(attch.alternative_text_header for attch in msg.attachments)
         if len(items) > max_items:

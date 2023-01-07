@@ -3,8 +3,8 @@ from typing import Optional
 
 import tg_importer.types as tg
 import vk_exporter.types as vk
-from vk_tg_converter.converters.media_converter import MediaConverter
-from vk_tg_converter.converters.message_converter import MessageConverter
+from vk_tg_converter.converters.media_converter import IMediaConverter
+from vk_tg_converter.converters.message_converter import IMessageConverter
 
 
 class IHistoryConverter(abc.ABC):
@@ -13,7 +13,7 @@ class IHistoryConverter(abc.ABC):
 
 
 class HistoryConverter(IHistoryConverter):
-    def __init__(self, message_converter: MessageConverter, media_converter: MediaConverter):
+    def __init__(self, message_converter: IMessageConverter, media_converter: IMediaConverter):
         self.message_converter = message_converter
         self.media_converter = media_converter
 

@@ -1,3 +1,4 @@
+import abc
 from pathlib import Path
 
 import yaml
@@ -5,9 +6,16 @@ import yaml
 from vk_tg_converter.contacts.username_manager import ContactInfo
 
 
-class ContactsStorage:
-    @staticmethod
-    def save_contacts(contacts: list[ContactInfo], file_path: Path) -> None:
+class IContactsStorage(abc.ABC):
+    @abc.abstractmethod
+    def save_contacts(self, contacts: list[ContactInfo], file_path: Path) -> None: ...
+
+    @abc.abstractmethod
+    def load_contacts(self, file_path: Path, *, empty_as_none: bool = True) -> list[ContactInfo]: ...
+
+
+class ContactsStorage(IContactsStorage):
+    def save_contacts(self, contacts: list[ContactInfo], file_path: Path) -> None:
         data = [
             {c.vk_id: [
                 {"vk_name": c.vk_name},
@@ -18,8 +26,7 @@ class ContactsStorage:
         with file_path.open("w") as f:
             yaml.dump(data, f, allow_unicode=True)
 
-    @staticmethod
-    def load_contacts(file_path: Path, *, empty_as_none: bool = True) -> list[ContactInfo]:
+    def load_contacts(self, file_path: Path, *, empty_as_none: bool = True) -> list[ContactInfo]:
         with file_path.open("r") as f:
             data = yaml.load(f, yaml.Loader)
         result: list[ContactInfo] = []

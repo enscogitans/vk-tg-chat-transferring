@@ -1,9 +1,9 @@
 from vk_exporter.arguments import ExporterArguments
-from vk_exporter.service import ExporterService
+from vk_exporter.service import IExporterService
 
 
 class ExporterController:
-    def __init__(self, service: ExporterService) -> None:
+    def __init__(self, service: IExporterService) -> None:
         self.service = service
 
     def __call__(self, args: ExporterArguments) -> None:

@@ -1,9 +1,9 @@
 from tg_importer.arguments import TgImporterArguments
-from tg_importer.service import TgImporterService
+from tg_importer.service import ITgImporterService
 
 
 class TgImporterController:
-    def __init__(self, service: TgImporterService) -> None:
+    def __init__(self, service: ITgImporterService) -> None:
         self.service = service
 
     async def __call__(self, args: TgImporterArguments) -> None:

@@ -5,7 +5,7 @@ from typing import TypeAlias, Union
 
 from common.sentinel import Sentinel
 from config import Config
-from tg_importer.storage import TgHistoryStorage
+from tg_importer.storage import ITgHistoryStorage
 
 ChatsArguments: TypeAlias = Union[
     "ChatsListArguments",
@@ -40,7 +40,7 @@ def fill_parser(parser: argparse.ArgumentParser, config: Config) -> None:
 
 
 def get_arguments(parser: argparse.ArgumentParser, namespace: argparse.Namespace,
-                  tg_history_storage: TgHistoryStorage) -> ChatsArguments:
+                  tg_history_storage: ITgHistoryStorage) -> ChatsArguments:
     match namespace.submodule:
         case "list":
             return ChatsListArguments()
@@ -155,7 +155,7 @@ class ChatsCreateArguments:
         parser.add_argument("--mute", action="store_true", help="Mute all users on chat creation")
 
     def __init__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace,
-                 tg_history_storage: TgHistoryStorage) -> None:
+                 tg_history_storage: ITgHistoryStorage) -> None:
         assert isinstance(namespace.mute, bool)
         self.is_mute = namespace.mute
 

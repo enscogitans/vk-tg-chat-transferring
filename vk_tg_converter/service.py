@@ -1,22 +1,32 @@
+import abc
 from pathlib import Path
-from typing import Optional
 
 from config import Config
-from tg_importer.storage import TgHistoryStorage
-from vk_exporter.storage import VkHistoryStorage
-from vk_tg_converter.contacts.storage import ContactsStorage
+from tg_importer.storage import ITgHistoryStorage
+from vk_exporter.storage import IVkHistoryStorage
+from vk_tg_converter.contacts.storage import IContactsStorage
 from vk_tg_converter.contacts.username_manager import ContactInfo
 from vk_tg_converter.converters.history_converter_factory import IHistoryConverterFactory
-from vk_tg_converter.dummy_history_provider import DummyHistoryProvider
+from vk_tg_converter.dummy_history_provider import IDummyHistoryProvider
 
 
-class ConverterService:
+class IConverterService(abc.ABC):
+    @abc.abstractmethod
+    def export_dummy_history(self, contacts_file: Path, export_file: Path) -> None: ...
+
+    @abc.abstractmethod
+    async def export_converted_history(self, vk_history_file: Path,
+                                       contacts_file_opt: None | Path, export_file: Path,
+                                       media_export_dir: Path, disable_progress_bar: bool) -> None: ...
+
+
+class ConverterService(IConverterService):
     def __init__(self, vk_config: Config.Vk,
-                 contacts_storage: ContactsStorage,
+                 contacts_storage: IContactsStorage,
                  history_converter_factory: IHistoryConverterFactory,
-                 dummy_history_provider: DummyHistoryProvider,
-                 vk_history_storage: VkHistoryStorage,
-                 tg_history_storage: TgHistoryStorage) -> None:
+                 dummy_history_provider: IDummyHistoryProvider,
+                 vk_history_storage: IVkHistoryStorage,
+                 tg_history_storage: ITgHistoryStorage) -> None:
         self.vk_config = vk_config
         self.contacts_storage = contacts_storage
         self.history_converter_factory = history_converter_factory
@@ -29,7 +39,7 @@ class ConverterService:
         tg_history = self.dummy_history_provider.make_history(contacts)
         self.tg_history_storage.save_history(tg_history, export_file)
 
-    async def export_converted_history(self, vk_history_file: Path, contacts_file_opt: Optional[Path],
+    async def export_converted_history(self, vk_history_file: Path, contacts_file_opt: None | Path,
                                        export_file: Path, media_export_dir: Path, disable_progress_bar: bool) -> None:
         contacts_opt: None | list[ContactInfo] = None
         if contacts_file_opt is not None:

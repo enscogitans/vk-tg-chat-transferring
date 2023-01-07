@@ -12,7 +12,7 @@ class ContactInfo:
     tg_name_opt: Optional[str]
 
 
-class UsernameManager(abc.ABC):
+class IUsernameManager(abc.ABC):
     @abc.abstractmethod
     def get_full_names(self, vk_user_ids: list[int]) -> list[str]: ...
 
@@ -24,7 +24,7 @@ class UsernameManager(abc.ABC):
         return full_name
 
 
-class UsernameManagerV1(UsernameManager):
+class UsernameManager(IUsernameManager):
     def __init__(self, api: VkApiMethod, prepared_contacts: Optional[list[ContactInfo]] = None):
         self.api = api
         self.contacts_cache: dict[int, ContactInfo] = dict()

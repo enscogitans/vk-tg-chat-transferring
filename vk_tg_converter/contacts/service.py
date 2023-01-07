@@ -1,20 +1,28 @@
+import abc
 from pathlib import Path
 
 import vk_exporter.types as vk
 from common.tg_client import TgClient
 from common.utils import get_full_name
-from vk_exporter.storage import VkHistoryStorage
-from vk_tg_converter.contacts.storage import ContactsStorage
-from vk_tg_converter.contacts.username_manager import UsernameManager, ContactInfo
+from vk_exporter.storage import IVkHistoryStorage
+from vk_tg_converter.contacts.storage import IContactsStorage
+from vk_tg_converter.contacts.username_manager import IUsernameManager, ContactInfo
 
 
-async def _get_contacts_names_saved_in_telegram(tg_client: TgClient) -> set[str]:
-    return {get_full_name(contact) for contact in await tg_client.get_contacts()}
+class IContactsService(abc.ABC):
+    @abc.abstractmethod
+    async def list_contacts(self) -> None: ...
+
+    @abc.abstractmethod
+    async def make_contacts_mapping_file(self, vk_history_input: Path, contacts_mapping_output: Path) -> None: ...
+
+    @abc.abstractmethod
+    async def check_tg_names_in_mapping_file(self, contacts_mapping_file: Path) -> None: ...
 
 
-class ContactsService:
-    def __init__(self, username_manager: UsernameManager, tg_client: TgClient,
-                 vk_history_storage: VkHistoryStorage, contacts_storage: ContactsStorage) -> None:
+class ContactsService(IContactsService):
+    def __init__(self, username_manager: IUsernameManager, tg_client: TgClient,
+                 vk_history_storage: IVkHistoryStorage, contacts_storage: IContactsStorage) -> None:
         self.username_manager = username_manager
         self.tg_client = tg_client
         self.vk_history_storage = vk_history_storage
@@ -35,7 +43,7 @@ class ContactsService:
 
     async def make_contacts_mapping_file(self, vk_history_input: Path, contacts_mapping_output: Path) -> None:
         async with self.tg_client:
-            tg_contacts_names: set[str] = await _get_contacts_names_saved_in_telegram(self.tg_client)
+            tg_contacts_names: set[str] = await self._get_contacts_names_saved_in_telegram()
 
         vk_history = self.vk_history_storage.load_history(vk_history_input)
         vk_messages: list[vk.Message] = vk_history.messages
@@ -66,7 +74,7 @@ class ContactsService:
 
     async def check_tg_names_in_mapping_file(self, contacts_mapping_file: Path) -> None:
         async with self.tg_client:
-            tg_contacts_names: set[str] = await _get_contacts_names_saved_in_telegram(self.tg_client)
+            tg_contacts_names: set[str] = await self._get_contacts_names_saved_in_telegram()
 
         mapping_data = self.contacts_storage.load_contacts(contacts_mapping_file, empty_as_none=False)
         # TODO: check all contacts have unique names
@@ -82,3 +90,6 @@ class ContactsService:
             print("List of these contacts:")
             for i, c in enumerate(wrong_contacts, start=1):
                 print(f"  {i}. tg_name='{c.tg_name_opt}'", f"vk_name='{c.vk_name}'", f"vk_id={c.vk_id}", sep="\t")
+
+    async def _get_contacts_names_saved_in_telegram(self) -> set[str]:
+        return {get_full_name(contact) for contact in await self.tg_client.get_contacts()}

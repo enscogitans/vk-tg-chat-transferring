@@ -1,5 +1,5 @@
+import abc
 from dataclasses import dataclass
-from typing import Optional
 
 from tqdm import tqdm
 from vk_api.execute import VkFunction
@@ -8,19 +8,24 @@ from vk_api.vk_api import VkApiMethod
 from vk_exporter.types import ChatRawHistory
 
 
+class IVkService(abc.ABC):
+    @abc.abstractmethod
+    def get_raw_history(self, peer_id: int, max_messages: None | int, disable_progress_bar: bool) -> ChatRawHistory: ...
+
+
 @dataclass
 class _ConversationInfo:
     last_message_id: int
-    title_opt: Optional[str]
-    photo_url_opt: Optional[str]
-    photo_size_opt: Optional[int]
+    title_opt: None | str
+    photo_url_opt: None | str
+    photo_size_opt: None | int
 
 
-class VkService:
+class VkService(IVkService):
     def __init__(self, api: VkApiMethod) -> None:
         self.api = api
 
-    def get_raw_history(self, peer_id: int, max_messages: Optional[int], disable_progress_bar: bool) -> ChatRawHistory:
+    def get_raw_history(self, peer_id: int, max_messages: None | int, disable_progress_bar: bool) -> ChatRawHistory:
         conversation_info: _ConversationInfo = self._get_conversation_info(peer_id)
         total_messages: int = self._get_messages_count(peer_id)  # Could have changed since the previous line
         if max_messages is not None:
@@ -54,9 +59,9 @@ class VkService:
 
     def _get_conversation_info(self, peer_id: int) -> _ConversationInfo:
         last_message_id: int
-        title_opt: Optional[str] = None
-        photo_url_opt: Optional[str] = None
-        photo_size_opt: Optional[int] = None
+        title_opt: None | str = None
+        photo_url_opt: None | str = None
+        photo_size_opt: None | int = None
 
         response: dict = self.api.messages.getConversationsById(peer_ids=peer_id)
         assert len(response["items"]) == 1, response

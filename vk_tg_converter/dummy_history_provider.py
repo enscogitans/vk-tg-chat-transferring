@@ -1,12 +1,17 @@
+import abc
 from datetime import datetime
 
 import tg_importer.types as tg
 from vk_tg_converter.contacts.username_manager import ContactInfo
 
 
-class DummyHistoryProvider:
-    @staticmethod
-    def make_history(contacts: list[ContactInfo]) -> tg.ChatHistory:
+class IDummyHistoryProvider(abc.ABC):
+    @abc.abstractmethod
+    def make_history(self, contacts: list[ContactInfo]) -> tg.ChatHistory: ...
+
+
+class DummyHistoryProvider(IDummyHistoryProvider):
+    def make_history(self, contacts: list[ContactInfo]) -> tg.ChatHistory:
         ts = datetime.now()
         tg_messages: list[tg.Message] = []
         for contact in contacts:
