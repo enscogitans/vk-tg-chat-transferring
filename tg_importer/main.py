@@ -1,23 +1,14 @@
-import argparse
-
 from common.tg_client import TgClient
 from config import Config
 from tg_importer.arguments import TgImporterArguments
 from tg_importer.controller import TgImporterController
 from tg_importer.encoder import WhatsAppAndroidEncoder
 from tg_importer.service import TgImporterService
-from tg_importer.storage import TgHistoryStorage
+from tg_importer.storage import ITgHistoryStorage
 
 
-def fill_parser(parser: argparse.ArgumentParser, config: Config) -> None:
-    TgImporterArguments.fill_parser(parser, config)
-
-
-async def main(parser: argparse.ArgumentParser, namespace: argparse.Namespace,
-               tg_config: Config.Telegram, tg_client: TgClient) -> None:
-    args = TgImporterArguments(parser, namespace)
-
-    tg_history_storage = TgHistoryStorage()
+async def main(args: TgImporterArguments, tg_config: Config.Telegram,
+               tg_client: TgClient, tg_history_storage: ITgHistoryStorage) -> None:
     encoder = WhatsAppAndroidEncoder(tg_config.timezone)
 
     async with tg_client:

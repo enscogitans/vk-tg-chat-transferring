@@ -1,3 +1,4 @@
-from login.main import fill_parser, main
+from login.arguments import LoginArguments, LoginArgumentsParser
+from login.main import main
 
-__all__ = ["fill_parser", "main"]
+__all__ = ["LoginArguments", "LoginArgumentsParser", "main"]

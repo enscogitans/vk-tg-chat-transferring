@@ -1,3 +1,4 @@
-from vk_tg_converter.main import fill_parser, main
+from vk_tg_converter.arguments import ConverterArguments, ConverterArgumentsParser
+from vk_tg_converter.main import main
 
-__all__ = ["fill_parser", "main"]
+__all__ = ["ConverterArguments", "ConverterArgumentsParser", "main"]

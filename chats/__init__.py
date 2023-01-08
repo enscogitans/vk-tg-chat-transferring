@@ -1,4 +1,4 @@
-from chats.arguments import fill_parser
+from chats.arguments import ChatsArguments, ChatsArgumentsParser
 from chats.main import main
 
-__all__ = ["fill_parser", "main"]
+__all__ = ["ChatsArguments", "ChatsArgumentsParser", "main"]

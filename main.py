@@ -1,6 +1,8 @@
 import argparse
 import asyncio
 import os
+from types import UnionType
+from typing import cast
 
 import chats
 import login
@@ -8,51 +10,48 @@ import tg_importer
 import vk_exporter
 import vk_tg_converter
 import vk_tg_converter.contacts
+from arguments import MainArgumentsParser, MainArguments, \
+    LoginArguments, VkExporterArguments, ContactsArguments, ConverterArguments, ChatsArguments, TgImporterArguments
 from common.tg_client import TgClient
 from common.vk_client import VkClient
 from config import Config
+from tg_importer.storage import ITgHistoryStorage, TgHistoryStorage
+
+
+def get_arguments(config: Config, tg_history_storage: ITgHistoryStorage) -> MainArguments:
+    parser = argparse.ArgumentParser()
+    main_parser = MainArgumentsParser.fill_parser(parser, config)
+    namespace = parser.parse_args()
+    return main_parser.parse_arguments(namespace, tg_history_storage)
+
+
+async def run_module(args: MainArguments, config: Config, vk_client: VkClient,
+                     tg_client: TgClient, tg_history_storage: ITgHistoryStorage) -> None:
+    if isinstance(args, cast(UnionType, LoginArguments)):
+        return await login.main(args, config)  # type: ignore[arg-type]
+    if isinstance(args, VkExporterArguments):
+        return vk_exporter.main(args, vk_client)
+    if isinstance(args, cast(UnionType, ContactsArguments)):
+        return await vk_tg_converter.contacts.main(args, vk_client, tg_client)  # type: ignore[arg-type]
+    if isinstance(args, ConverterArguments):
+        return await vk_tg_converter.main(args, config, vk_client, tg_history_storage)
+    if isinstance(args, cast(UnionType, ChatsArguments)):
+        return await chats.main(args, tg_client)  # type: ignore[arg-type]
+    if isinstance(args, TgImporterArguments):
+        return await tg_importer.main(args, config.tg, tg_client, tg_history_storage)
+    raise ValueError(f"Unexpected arguments: {args}")
 
 
 async def main() -> None:
     config = Config()
+    tg_history_storage = TgHistoryStorage()
 
-    parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers(dest="module", required=True)
+    args = get_arguments(config, tg_history_storage)
 
-    login_parser = subparsers.add_parser("login")
-    login.fill_parser(login_parser)
+    vk_client = VkClient(config.vk)
+    tg_client = TgClient(config.tg)
 
-    export_parser = subparsers.add_parser("export")
-    vk_exporter.fill_parser(export_parser, config)
-
-    contacts_parser = subparsers.add_parser("contacts")
-    vk_tg_converter.contacts.fill_parser(contacts_parser, config)
-
-    convert_parser = subparsers.add_parser("convert")
-    vk_tg_converter.fill_parser(convert_parser, config)
-
-    chats_parser = subparsers.add_parser("chats")
-    chats.fill_parser(chats_parser, config)
-
-    import_parser = subparsers.add_parser("import")
-    tg_importer.fill_parser(import_parser, config)
-
-    args = parser.parse_args()
-    match args.module:
-        case "login":
-            await login.main(args, config)
-        case "export":
-            vk_exporter.main(export_parser, args, config, VkClient(config.vk))
-        case "contacts":
-            await vk_tg_converter.contacts.main(contacts_parser, args, VkClient(config.vk), TgClient(config.tg))
-        case "convert":
-            await vk_tg_converter.main(convert_parser, args, config, VkClient(config.vk))
-        case "chats":
-            await chats.main(chats_parser, args, TgClient(config.tg))
-        case "import":
-            await tg_importer.main(import_parser, args, config.tg, TgClient(config.tg))
-        case module:
-            raise ValueError(f"Unexpected module {module}")
+    await run_module(args, config, vk_client, tg_client, tg_history_storage)
 
 
 if __name__ == "__main__":

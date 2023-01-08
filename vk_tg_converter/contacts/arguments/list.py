@@ -1,0 +1,2 @@
+class ListArguments:
+    """Nothing here"""

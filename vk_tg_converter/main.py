@@ -1,8 +1,6 @@
-import argparse
-
 from common.vk_client import VkClient
 from config import Config
-from tg_importer.storage import TgHistoryStorage
+from tg_importer.storage import ITgHistoryStorage
 from vk_exporter.storage import VkHistoryStorage
 from vk_tg_converter.arguments import ConverterArguments
 from vk_tg_converter.contacts.storage import ContactsStorage
@@ -12,14 +10,8 @@ from vk_tg_converter.dummy_history_provider import DummyHistoryProvider
 from vk_tg_converter.service import ConverterService
 
 
-def fill_parser(parser: argparse.ArgumentParser, config: Config) -> None:
-    ConverterArguments.fill_parser(parser, config)
-
-
-async def main(parser: argparse.ArgumentParser, namespace: argparse.Namespace,
-               config: Config, vk_client: VkClient) -> None:
-    args = ConverterArguments(parser, namespace)
-
+async def main(args: ConverterArguments, config: Config,
+               vk_client: VkClient, tg_history_storage: ITgHistoryStorage) -> None:
     vk_api = vk_client.get_api()
     service = ConverterService(
         config.vk,
@@ -27,8 +19,7 @@ async def main(parser: argparse.ArgumentParser, namespace: argparse.Namespace,
         HistoryConverterFactory(vk_api, config),
         DummyHistoryProvider(),
         VkHistoryStorage(),
-        TgHistoryStorage(),
+        tg_history_storage,
     )
-
     controller = ConverterController(service)
     await controller(args)

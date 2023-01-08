@@ -15,8 +15,10 @@ class VkExporterArguments:
     chat_id: Optional[int]
     messages_count: Optional[int]
 
+
+class VkExporterArgumentsParser:
     @staticmethod
-    def fill_parser(parser: argparse.ArgumentParser, config: Config) -> None:
+    def fill_parser(parser: argparse.ArgumentParser, config: Config) -> "VkExporterArgumentsParser":
         parser.add_argument("--export-file", type=Path, metavar="PATH",
                             help="File where history will be dumped (in pickle format)")
 
@@ -31,33 +33,55 @@ class VkExporterArguments:
         group2.add_argument("--raw-export", action="store_true", help="Export only raw messages data")
         group2.add_argument("--no-progress-bar", action="store_true")
 
-    def __init__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, config: Config) -> None:
-        assert isinstance(namespace.raw_export, bool)
-        self.is_raw_export = namespace.raw_export
-        assert namespace.export_file is None or isinstance(namespace.export_file, Path)
-        if namespace.export_file is not None:
-            self.export_file = namespace.export_file
-        elif self.is_raw_export:
-            self.export_file = config.vk_default_raw_export_file
-        else:
-            self.export_file = config.vk_default_export_file
-        assert isinstance(namespace.no_progress_bar, bool)
-        self.is_disable_progress_bar = namespace.no_progress_bar
-        assert namespace.raw_input_path is None or isinstance(namespace.raw_input_path, Path)
-        self.raw_import_file = namespace.raw_input_path
-        assert namespace.chat is None or isinstance(namespace.chat, int)
-        self.chat_id = namespace.chat
-        assert namespace.n is None or isinstance(namespace.n, int)
-        self.messages_count = namespace.n
-        self._validate_args(parser)
+        return VkExporterArgumentsParser(parser, config)
 
-    def _validate_args(self, parser: argparse.ArgumentParser) -> None:
-        if self.export_file.exists():
-            parser.error(f"Export file already exists {self.export_file}")
-        if (self.chat_id is None) == (self.raw_import_file is None):
-            parser.error("Provide either '--chat ID' or '--raw-input [PATH]'")
-        if self.raw_import_file is not None and not self.raw_import_file.exists():
-            parser.error(f"Import file does not exist {self.raw_import_file}")
-        if self.is_raw_export and self.raw_import_file is not None:
-            parser.error("You are trying to save raw data while reading raw data: "
-                         "do not use both --raw-export and --raw-input")
+    def __init__(self, parser: argparse.ArgumentParser, config: Config) -> None:
+        self.parser = parser
+        self.config = config
+
+    def parse_arguments(self, namespace: argparse.Namespace) -> VkExporterArguments:
+        is_raw_export = namespace.raw_export
+        assert isinstance(is_raw_export, bool)
+        arg_export_file = namespace.export_file
+        assert arg_export_file is None or isinstance(arg_export_file, Path)
+        is_disable_progress_bar = namespace.no_progress_bar
+        assert isinstance(is_disable_progress_bar, bool)
+        raw_import_file = namespace.raw_input_path
+        assert raw_import_file is None or isinstance(raw_import_file, Path)
+        chat_id = namespace.chat
+        assert chat_id is None or isinstance(chat_id, int)
+        messages_count = namespace.n
+        assert messages_count is None or isinstance(messages_count, int)
+
+        export_file: Path
+        if arg_export_file is not None:
+            export_file = arg_export_file
+        elif is_raw_export:
+            export_file = self.config.vk_default_raw_export_file
+        else:
+            export_file = self.config.vk_default_export_file
+
+        args = VkExporterArguments(
+            is_raw_export=is_raw_export,
+            export_file=export_file,
+            is_disable_progress_bar=is_disable_progress_bar,
+            raw_import_file=raw_import_file,
+            chat_id=chat_id,
+            messages_count=messages_count,
+        )
+        self._validate(args)
+        return args
+
+    def _validate(self, args: VkExporterArguments) -> None:
+        if args.export_file.exists():
+            self.parser.error(f"Export file already exists: {args.export_file}")
+        if (args.chat_id is None) == (args.raw_import_file is None):
+            self.parser.error("Provide either '--chat ID' or '--raw-input [PATH]'")
+        if args.raw_import_file is not None:
+            if not args.raw_import_file.exists():
+                self.parser.error(f"Import file does not exist: {args.raw_import_file}")
+            if not args.raw_import_file.is_file():
+                self.parser.error(f"Import file path does not point to a file: {args.raw_import_file}")
+        if args.is_raw_export and args.raw_import_file is not None:
+            self.parser.error("You are trying to save raw data while reading raw data: "
+                              "do not use both --raw-export and --raw-input")
