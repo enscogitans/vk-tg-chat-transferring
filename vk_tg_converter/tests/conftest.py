@@ -1,6 +1,6 @@
+from datetime import timezone
 from pathlib import PurePath
 from typing import Dict, Optional
-from datetime import timezone
 
 import pytest
 

@@ -6,9 +6,9 @@ from vk_api.vk_api import VkApiMethod
 
 from config import Config
 from vk_tg_converter.contacts.username_manager import ContactInfo, UsernameManager
+from vk_tg_converter.converters.history_converter import IHistoryConverter, HistoryConverter
 from vk_tg_converter.converters.media_converter import MediaConverter
 from vk_tg_converter.converters.message_converter import MessageConverter
-from vk_tg_converter.converters.history_converter import IHistoryConverter, HistoryConverter
 from vk_tg_converter.converters.video_downloader import VideoDownloader
 
 
