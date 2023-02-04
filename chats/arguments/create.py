@@ -72,7 +72,7 @@ class CreateArgumentsParser:
         if arg_tg_history_path is None:
             if arg_title is None:
                 self.parser.error("Neither --title provided nor --use-history used")
-            elif isinstance(arg_photo, Sentinel):
+            if isinstance(arg_photo, Sentinel):
                 self.parser.error("You have to provide photo path in '--photo PATH' unless you use --use-history")
 
         if (arg_title is not None) and not isinstance(arg_photo, Sentinel):

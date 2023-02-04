@@ -58,7 +58,7 @@ class MediaConverter(IMediaConverter):
                 result[idx] = await self._try_convert_non_video(attch, session)
 
             tasks = [one_task(attch, idx) for attch, idx in non_videos_with_idx]
-            await tqdm.gather(*tasks, desc="Non-video", position=0, disable=self.disable_progress_bar)
+            await tqdm.gather(*tasks, desc="Non-video", disable=self.disable_progress_bar)
 
         async def videos_task(session: ClientSession) -> None:
             async def one_task(video: vk.Video, idx: int, executor: Executor) -> None:
@@ -66,10 +66,13 @@ class MediaConverter(IMediaConverter):
 
             with ThreadPoolExecutor(max_workers=self.max_video_workers) as executor:
                 tasks = [one_task(video, idx, executor) for video, idx in videos_with_idx]
-                await tqdm.gather(*tasks, desc="Video", position=1, disable=self.disable_progress_bar)
+                await tqdm.gather(*tasks, desc="Video", disable=self.disable_progress_bar)
 
         async with ClientSession() as session:
-            await asyncio.gather(non_videos_task(session), videos_task(session))
+            await asyncio.gather(non_videos_task(session))
+            # Running them in parallel doesn't really speed anything up
+            # Sequential run at least has better visualization
+            await asyncio.gather(videos_task(session))
         return result
 
     @staticmethod
@@ -117,8 +120,8 @@ class MediaConverter(IMediaConverter):
         if file_opt := await self._try_download_file(sticker.image_url, session):
             if not file_opt.suffix == ".webp":
                 new_path = file_opt.with_suffix(".webp")
-                image = PIL.Image.open(file_opt)
-                image.save(new_path, format="webp")
+                with PIL.Image.open(file_opt) as image:
+                    image.save(new_path, format="webp")
                 file_opt.unlink()
                 file_opt = new_path
             return tg.Sticker(path=file_opt)

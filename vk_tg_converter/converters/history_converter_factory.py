@@ -24,7 +24,7 @@ class HistoryConverterFactory(IHistoryConverterFactory):
         self.config = config
 
     def create(self, contacts: Optional[list[ContactInfo]],
-               media_export_dir: Path, disable_progress_bar: bool) -> IHistoryConverter:
+               media_export_dir: Path, disable_progress_bar: bool) -> HistoryConverter:
         username_manager = UsernameManager(self.vk_api, contacts)
         video_downloader = VideoDownloader(
             self.config.tg.allowed_video_formats, self.config.tg.video_conversion_format,

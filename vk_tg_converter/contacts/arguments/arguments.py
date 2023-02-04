@@ -1,9 +1,9 @@
 import argparse
 from typing import TypeAlias
 
-from chats.arguments.list import ListArguments
 from config import Config
 from vk_tg_converter.contacts.arguments.check import CheckArguments, CheckArgumentsParser
+from vk_tg_converter.contacts.arguments.list import ListArguments
 from vk_tg_converter.contacts.arguments.prepare import PrepareArguments, PrepareArgumentsParser
 
 ContactsArguments: TypeAlias = ListArguments | PrepareArguments | CheckArguments
