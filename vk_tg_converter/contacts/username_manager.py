@@ -23,11 +23,15 @@ class IUsernameManager(abc.ABC):
         [full_name] = self.get_full_names([vk_user_id])
         return full_name
 
+    @abc.abstractmethod
+    def get_ego_id(self) -> int: ...
+
 
 class UsernameManager(IUsernameManager):
     def __init__(self, api: VkApiMethod, prepared_contacts: Optional[list[ContactInfo]] = None):
         self.api = api
         self.contacts_cache: dict[int, ContactInfo] = dict()
+        self.ego_id: None | int = None
         if prepared_contacts is not None:
             assert all(c.tg_name_opt != "" for c in prepared_contacts), "If tg name is missing, set it to None, not ''"
             self.contacts_cache = {c.vk_id: c for c in prepared_contacts}
@@ -56,6 +60,14 @@ class UsernameManager(IUsernameManager):
                     self.contacts_cache[group_id] = contact
 
         return [self.contacts_cache[user_id].vk_name for user_id in vk_ids]
+
+    def get_ego_id(self) -> int:
+        if self.ego_id is None:
+            [ego_user] = self.api.users.get()
+            self.ego_id = ego_user["id"]
+            self.contacts_cache[self.ego_id] = ContactInfo(
+                vk_id=self.ego_id, vk_name=self._make_full_name(ego_user), tg_name_opt=None)
+        return self.ego_id
 
     @staticmethod
     def _make_full_name(user_data: dict[Any, Any]) -> str:

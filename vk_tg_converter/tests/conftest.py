@@ -19,6 +19,9 @@ class FakeUsernameManager(IUsernameManager):
     def try_get_tg_name(self, vk_user_id):
         return f"Tg {vk_user_id}"
 
+    def get_ego_id(self) -> int:
+        raise NotImplementedError
+
 
 class FakeMediaConverter(IMediaConverter):
     def __init__(self):
