@@ -1,5 +1,6 @@
 import abc
 import pickle
+import json
 from pathlib import Path
 
 from vk_exporter.types import ChatHistory, ChatRawHistory
@@ -21,18 +22,18 @@ class IVkHistoryStorage(abc.ABC):
 
 class VkHistoryStorage(IVkHistoryStorage):
     def save_raw_history(self, raw_history: ChatRawHistory, path: Path) -> None:
-        with path.open("xb") as f:
+        with path.open("x") as f:
             dct = {
                 "raw_messages": raw_history.raw_messages,
                 "title_opt": raw_history.title_opt,
                 "photo_url_opt": raw_history.photo_url_opt,
                 "photo_size_opt": raw_history.photo_size_opt,
             }
-            pickle.dump(dct, f)
+            json.dump(dct, f, ensure_ascii=False, indent=2)
 
     def load_raw_history(self, path: Path) -> ChatRawHistory:
-        with path.open("rb") as f:
-            dct = pickle.load(f)
+        with path.open() as f:
+            dct = json.load(f)
         assert isinstance(dct, dict), type(dct)
         return ChatRawHistory(
             raw_messages=dct["raw_messages"],

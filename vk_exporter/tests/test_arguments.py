@@ -21,7 +21,7 @@ def get_arguments(arguments_line: str) -> VkExporterArguments:
 def test_raw_input():
     args = get_arguments("--raw-input")
     assert args.chat_id is None
-    assert args.raw_import_file == Path("vk_raw_history.pickle")
+    assert args.raw_import_file == Path("vk_raw_history.json")
 
 
 def test_chat_id():

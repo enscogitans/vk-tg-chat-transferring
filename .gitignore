@@ -8,6 +8,7 @@ __pycache__
 /*.session
 # files with chat history
 /*.pickle
+/*.json
 # files with contacts mapping
 /*.yaml
 # directory where media files are exported
