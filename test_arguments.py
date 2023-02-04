@@ -47,7 +47,7 @@ def test_login():
 
 
 def test_export():
-    args = get_arguments("export")
+    args = get_arguments("export --chat 123")
     assert isinstance(args, VkExporterArguments)
     assert args.export_file == Path("vk_history.pickle")
 

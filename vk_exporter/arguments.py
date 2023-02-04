@@ -1,4 +1,5 @@
 import argparse
+import urllib.parse
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -28,7 +29,7 @@ class VkExporterArgumentsParser:
                             help="File containing raw history data. If PATH is not provided, use default one")
 
         group2 = parser.add_argument_group("Import data from vk")
-        group2.add_argument("--chat", type=int, metavar="ID", help="Id of the chat")
+        group2.add_argument("--chat", type=str, metavar="ID/LINK", help="Id of the chat or a link to it")
         group2.add_argument("-n", type=int, metavar="N", help="Export only N last messages")
         group2.add_argument("--raw-export", action="store_true", help="Export only raw messages data")
         group2.add_argument("--no-progress-bar", action="store_true")
@@ -48,7 +49,7 @@ class VkExporterArgumentsParser:
         assert isinstance(is_disable_progress_bar, bool)
         raw_import_file = namespace.raw_input_path
         assert raw_import_file is None or isinstance(raw_import_file, Path)
-        chat_id = namespace.chat
+        chat_id = None if namespace.chat is None else self._get_chat_id(namespace.chat)
         assert chat_id is None or isinstance(chat_id, int)
         messages_count = namespace.n
         assert messages_count is None or isinstance(messages_count, int)
@@ -71,6 +72,29 @@ class VkExporterArgumentsParser:
         )
         self._validate(args)
         return args
+
+    def _get_chat_id(self, input_str: str) -> int:
+        try:
+            return int(input_str)
+        except ValueError:
+            return self._parse_id_from_link(input_str)
+
+    def _parse_id_from_link(self, link: str) -> int:
+        query: str = urllib.parse.urlparse(link).query
+        params_dict = urllib.parse.parse_qs(query)
+        key = "sel"
+        if key not in params_dict:
+            self.parser.error("Can't find chat id in provided url")
+        if len(params_dict[key]) > 1:
+            self.parser.error("Too many ids in provided url")
+
+        value = params_dict[key][0]
+        try:
+            if value.startswith("c"):  # id of a group looks like 'c120'
+                return 2_000_000_000 + int(value[1:])
+            return int(value)
+        except ValueError:
+            self.parser.error(f"Can't extract chat id from url '{link}'")
 
     def _validate(self, args: VkExporterArguments) -> None:
         if args.export_file.exists():
