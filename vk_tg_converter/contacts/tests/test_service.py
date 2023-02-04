@@ -64,8 +64,10 @@ def vk_history_storage():
 
         def set_messages_from_users(self, user_ids: list[int]):
             ts = datetime.datetime(2007, 10, 10)
-            for user_id in user_ids:
-                self.messages.append(Message(from_id=user_id, date=ts, text=str(user_id)))
+            self.messages = [
+                Message(conversation_message_id=i, from_id=user_id, date=ts, text=str(user_id))
+                for i, user_id in enumerate(user_ids)
+            ]
 
         def load_history(self, path):
             return ChatHistory(messages=self.messages, title_opt="Title", photo_opt=None)

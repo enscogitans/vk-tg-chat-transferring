@@ -24,6 +24,7 @@ class ChatRawHistory:
 @dataclass(frozen=True)
 class Message:
     """https://dev.vk.com/reference/objects/message"""
+    conversation_message_id: int
     from_id: int
     date: datetime
     text: str
@@ -47,6 +48,7 @@ class Message:
         if "action" in message_dict:
             action = parse_action(message_dict["action"])
         return Message(
+            conversation_message_id=message_dict["conversation_message_id"],
             date=datetime.fromtimestamp(message_dict["date"], tz=timezone.utc),
             from_id=message_dict["from_id"],
             text=message_dict["text"],
@@ -161,8 +163,8 @@ class Video:
             owner_id=video_dict["owner_id"],
             width=video_dict.get("width", 0),
             height=video_dict.get("height", 0),
-            duration=video_dict["duration"],
-            content_restricted=video_dict.get("content_restricted", False),
+            duration=video_dict.get("duration", 0),  # if the content is restricted, 'duration' field is missing
+            content_restricted="restriction" in video_dict,
             image_url=Video._pick_best_image(video_dict["image"])["url"],
             access_key=video_dict.get("access_key"),
         )
@@ -365,7 +367,8 @@ def parse_action(action_dict: dict) -> Action:
         case "chat_kick_user":
             return KickUserAction(kicked_user_id=action_dict["member_id"])
         case "chat_pin_message":
-            return PinMessageAction(conversation_message_id=action_dict["conversation_message_id"])
+            return PinMessageAction(conversation_message_id=action_dict["conversation_message_id"],
+                                    message=action_dict.get("message", ""))
         case "chat_unpin_message":
             return UnpinMessageAction(conversation_message_id=action_dict["conversation_message_id"])
         case "chat_screenshot":
@@ -408,6 +411,9 @@ class KickUserAction:
 @dataclass
 class PinMessageAction:
     conversation_message_id: int
+    # Text from pinned message. Sometimes it can be missing. It can be helpful if you have no access to the message
+    #   because you have no access to the full chat history
+    message: str
 
 
 @dataclass

@@ -4,14 +4,14 @@ from vk_tg_converter.tests.common import data_dir, make_ts
 
 
 async def test_simple_text(converter):
-    vk_msg = vk.Message(date=make_ts(0, 0), from_id=100, text="Hi!")
+    vk_msg = vk.Message(conversation_message_id=0, date=make_ts(0, 0), from_id=100, text="Hi!")
     [tg_msg] = await converter.convert([vk_msg])
     assert tg_msg.user == "Tg 100"
     assert tg_msg.text == "Hi!"
 
 
 async def test_mention(converter):
-    vk_msg = vk.Message(date=make_ts(0, 0), from_id=100, text="Hi, [id151515151|Alice]!")
+    vk_msg = vk.Message(conversation_message_id=0, date=make_ts(0, 0), from_id=100, text="Hi, [id151515151|Alice]!")
     [tg_msg] = await converter.convert([vk_msg])
     assert tg_msg.user == "Tg 100"
     assert tg_msg.text == "Hi, Alice!"
@@ -22,7 +22,8 @@ async def test_simple_photo(media_converter, converter):
     tg_photo = tg.Photo(data_dir / "img.jpg")
     media_converter.add(vk_photo, tg_photo)
 
-    vk_msg = vk.Message(date=make_ts(0, 0), from_id=100, text="caption", attachments=(vk_photo,))
+    vk_msg = vk.Message(conversation_message_id=0, date=make_ts(0, 0), from_id=100, text="caption",
+                        attachments=(vk_photo,))
     [tg_msg] = await converter.convert([vk_msg])
     assert tg_msg.user == "Tg 100"
     assert tg_msg.text == "caption"
@@ -32,7 +33,7 @@ async def test_simple_photo(media_converter, converter):
 async def test_simple_link(media_converter, converter):
     vk_link = vk.Link(url="https://example.com", title="Example")
     media_converter.add(vk_link, None)
-    vk_msg = vk.Message(date=make_ts(0, 0), from_id=100, text="text", attachments=(vk_link,))
+    vk_msg = vk.Message(conversation_message_id=0, date=make_ts(0, 0), from_id=100, text="text", attachments=(vk_link,))
     [tg_msg] = await converter.convert([vk_msg])
     assert tg_msg.user == "Tg 100"
     assert tg_msg.text == (
@@ -47,7 +48,8 @@ async def test_simple_link(media_converter, converter):
 async def test_do_not_repeat_links(media_converter, converter):
     vk_link = vk.Link(url="https://example.com", title="Example")
     media_converter.add(vk_link, None)
-    vk_msg = vk.Message(date=make_ts(0, 0), from_id=100, text="https://example.com/", attachments=(vk_link,))
+    vk_msg = vk.Message(conversation_message_id=0, date=make_ts(0, 0), from_id=100, text="https://example.com/",
+                        attachments=(vk_link,))
     [tg_msg] = await converter.convert([vk_msg])
     assert tg_msg.user == "Tg 100"
     assert tg_msg.text == "https://example.com/"
@@ -57,7 +59,8 @@ async def test_do_not_repeat_links(media_converter, converter):
 async def test_do_not_repeat_links_2(media_converter, converter):
     vk_link = vk.Link(url="https://example.com/", title="Example")
     media_converter.add(vk_link, None)
-    vk_msg = vk.Message(date=make_ts(0, 0), from_id=100, text="example.com", attachments=(vk_link,))
+    vk_msg = vk.Message(conversation_message_id=0, date=make_ts(0, 0), from_id=100, text="example.com",
+                        attachments=(vk_link,))
     [tg_msg] = await converter.convert([vk_msg])
     assert tg_msg.user == "Tg 100"
     assert tg_msg.text == "example.com"
@@ -67,7 +70,7 @@ async def test_do_not_repeat_links_2(media_converter, converter):
 async def test_filter_for_links_is_smart_enough(media_converter, converter):
     vk_link = vk.Link(url="https://example.com", title="Example")
     media_converter.add(vk_link, None)
-    vk_msg = vk.Message(date=make_ts(0, 0), from_id=100,
+    vk_msg = vk.Message(conversation_message_id=0, date=make_ts(0, 0), from_id=100,
                         text="Broken Linkhttps://example.com", attachments=(vk_link,))
     [tg_msg] = await converter.convert([vk_msg])
     assert tg_msg.user == "Tg 100"
@@ -83,7 +86,8 @@ async def test_filter_for_links_is_smart_enough(media_converter, converter):
 async def test_simple_repost(media_converter, converter):
     vk_wall = vk.Wall(id=2418560, owner_id=1)
     media_converter.add(vk_wall, None)
-    vk_msg = vk.Message(date=make_ts(0, 0), from_id=100, text="I love SPB!", attachments=(vk_wall,))
+    vk_msg = vk.Message(conversation_message_id=0, date=make_ts(0, 0), from_id=100, text="I love SPB!",
+                        attachments=(vk_wall,))
     [tg_msg] = await converter.convert([vk_msg])
     assert tg_msg.user == "Tg 100"
     assert tg_msg.text == (
@@ -100,7 +104,7 @@ async def test_simple_poll(media_converter, converter):
     )
     vk_poll = vk.Poll("yes/no?", answers=answers, anonymous=True, multiple=False)
     media_converter.add(vk_poll, None)
-    vk_msg = vk.Message(date=make_ts(0, 0), from_id=100, text="", attachments=(vk_poll,))
+    vk_msg = vk.Message(conversation_message_id=0, date=make_ts(0, 0), from_id=100, text="", attachments=(vk_poll,))
     [tg_msg] = await converter.convert([vk_msg])
     assert tg_msg.user == "Tg 100"
     assert tg_msg.text == (
@@ -120,7 +124,7 @@ async def test_text_with_poll(media_converter, converter):
     )
     vk_poll = vk.Poll("yes/no?", answers=answers, anonymous=False, multiple=True)
     media_converter.add(vk_poll, None)
-    vk_msg = vk.Message(date=make_ts(0, 0), from_id=100, text="text", attachments=(vk_poll,))
+    vk_msg = vk.Message(conversation_message_id=0, date=make_ts(0, 0), from_id=100, text="text", attachments=(vk_poll,))
     [tg_msg] = await converter.convert([vk_msg])
     assert tg_msg.user == "Tg 100"
     assert tg_msg.text == (
@@ -138,7 +142,7 @@ async def test_text_with_poll(media_converter, converter):
 async def test_restricted_audio(media_converter, converter):
     vk_audio = vk.Audio(url="", id=1, owner_id=2, artist="Ar", title="Ti", duration=100, content_restricted=True)
     media_converter.add(vk_audio, None)
-    vk_msg = vk.Message(date=make_ts(0, 0), from_id=100, text="", attachments=(vk_audio,))
+    vk_msg = vk.Message(conversation_message_id=0, date=make_ts(0, 0), from_id=100, text="", attachments=(vk_audio,))
     [tg_msg] = await converter.convert([vk_msg])
     assert tg_msg.user == "Tg 100"
     assert tg_msg.text == (
@@ -161,7 +165,7 @@ async def test_text_with_3_photos(media_converter, converter):
     media_converter.add(vk_photo_2, tg_photo_2)
     media_converter.add(vk_photo_3, tg_photo_3)
 
-    vk_msg = vk.Message(date=make_ts(0, 0), from_id=100, text="text",
+    vk_msg = vk.Message(conversation_message_id=0, date=make_ts(0, 0), from_id=100, text="text",
                         attachments=(vk_photo_1, vk_photo_2, vk_photo_3))
 
     [tg_msg_1, tg_msg_2, tg_msg_3] = await converter.convert([vk_msg])
@@ -177,7 +181,8 @@ async def test_text_with_3_photos(media_converter, converter):
 async def test_unsupported_attachment(media_converter, converter):
     attachment = vk.UnsupportedAttachment("some_type")
     media_converter.add(attachment, None)
-    vk_msg = vk.Message(date=make_ts(0, 0), from_id=100, text="text", attachments=(attachment,))
+    vk_msg = vk.Message(conversation_message_id=0, date=make_ts(0, 0), from_id=100, text="text",
+                        attachments=(attachment,))
     [tg_msg] = await converter.convert([vk_msg])
     assert tg_msg.user == "Tg 100"
     assert tg_msg.text == (

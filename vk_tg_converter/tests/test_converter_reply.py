@@ -7,8 +7,9 @@ from vk_tg_converter.tests.common import data_dir, make_ts
 
 
 async def test_simple_reply(converter):
-    vk_msg_1 = vk.Message(date=make_ts(0, 0), from_id=100, text="Hi!")
-    vk_msg_2 = vk.Message(date=make_ts(0, 1), from_id=101, text="Hello", reply_message=vk_msg_1)
+    vk_msg_1 = vk.Message(conversation_message_id=0, date=make_ts(0, 0), from_id=100, text="Hi!")
+    vk_msg_2 = vk.Message(conversation_message_id=1, date=make_ts(0, 1), from_id=101, text="Hello",
+                          reply_message=vk_msg_1)
 
     [tg_msg] = await converter.convert([vk_msg_2])
     assert tg_msg.user == "Tg 101"
@@ -25,8 +26,9 @@ async def test_timezone(username_manager, media_converter):
     tz = datetime.timezone(datetime.timedelta(hours=3))
     converter = MessageConverter(tz, username_manager, media_converter)
 
-    vk_msg_1 = vk.Message(date=make_ts(0, 0), from_id=100, text="Hi")
-    vk_msg_2 = vk.Message(date=make_ts(0, 1), from_id=101, text="Hello", reply_message=vk_msg_1)
+    vk_msg_1 = vk.Message(conversation_message_id=0, date=make_ts(0, 0), from_id=100, text="Hi")
+    vk_msg_2 = vk.Message(conversation_message_id=1, date=make_ts(0, 1), from_id=101, text="Hello",
+                          reply_message=vk_msg_1)
 
     [tg_msg] = await converter.convert([vk_msg_2])
     assert tg_msg.user == "Tg 101"
@@ -40,8 +42,9 @@ async def test_timezone(username_manager, media_converter):
 
 
 async def test_reply_to_mention(converter):
-    vk_msg_1 = vk.Message(date=make_ts(0, 0), from_id=100, text="Hi, [id151515151|Alice]!")
-    vk_msg_2 = vk.Message(date=make_ts(0, 1), from_id=101, text="Hello", reply_message=vk_msg_1)
+    vk_msg_1 = vk.Message(conversation_message_id=0, date=make_ts(0, 0), from_id=100, text="Hi, [id151515151|Alice]!")
+    vk_msg_2 = vk.Message(conversation_message_id=1, date=make_ts(0, 1), from_id=101, text="Hello",
+                          reply_message=vk_msg_1)
 
     [tg_msg] = await converter.convert([vk_msg_2])
     assert tg_msg.user == "Tg 101"
@@ -57,8 +60,9 @@ async def test_reply_to_mention(converter):
 async def test_reply_to_very_long_message(converter):
     text = "A" * 1000
     short_text = "A" * 119 + "…"
-    vk_msg_1 = vk.Message(date=make_ts(0, 0), from_id=100, text=text)
-    vk_msg_2 = vk.Message(date=make_ts(0, 1), from_id=101, text="Hello", reply_message=vk_msg_1)
+    vk_msg_1 = vk.Message(conversation_message_id=0, date=make_ts(0, 0), from_id=100, text=text)
+    vk_msg_2 = vk.Message(conversation_message_id=1, date=make_ts(0, 1), from_id=101, text="Hello",
+                          reply_message=vk_msg_1)
 
     [tg_msg] = await converter.convert([vk_msg_2])
     assert tg_msg.user == "Tg 101"
@@ -73,8 +77,8 @@ async def test_reply_to_very_long_message(converter):
 
 async def test_reply_to_message_with_many_lines(converter):
     text = "\n".join("A" * 50)
-    vk_msg_1 = vk.Message(date=make_ts(0, 0), from_id=100, text=text)
-    vk_msg_2 = vk.Message(date=make_ts(0, 1), from_id=101, text="Hi", reply_message=vk_msg_1)
+    vk_msg_1 = vk.Message(conversation_message_id=0, date=make_ts(0, 0), from_id=100, text=text)
+    vk_msg_2 = vk.Message(conversation_message_id=1, date=make_ts(0, 1), from_id=101, text="Hi", reply_message=vk_msg_1)
 
     [tg_msg] = await converter.convert([vk_msg_2])
     assert tg_msg.user == "Tg 101"
@@ -91,8 +95,10 @@ async def test_reply_to_message_with_many_lines(converter):
 
 async def test_reply_to_repost(converter):
     vk_wall = vk.Wall(id=2418560, owner_id=1)
-    vk_msg_1 = vk.Message(date=make_ts(0, 0), from_id=100, text="I love SPB!", attachments=(vk_wall,))
-    vk_msg_2 = vk.Message(date=make_ts(0, 1), from_id=101, text="wow...", reply_message=vk_msg_1)
+    vk_msg_1 = vk.Message(conversation_message_id=0, date=make_ts(0, 0), from_id=100, text="I love SPB!",
+                          attachments=(vk_wall,))
+    vk_msg_2 = vk.Message(conversation_message_id=1, date=make_ts(0, 1), from_id=101, text="wow...",
+                          reply_message=vk_msg_1)
     [tg_msg] = await converter.convert([vk_msg_2])
     assert tg_msg.user == "Tg 101"
     assert tg_msg.text == (
@@ -108,8 +114,10 @@ async def test_reply_to_repost(converter):
 
 async def test_reply_to_message_with_link(converter):
     vk_link = vk.Link(url="https://example.com", title="Example")
-    vk_msg_1 = vk.Message(date=make_ts(0, 0), from_id=100, text="Some link", attachments=(vk_link,))
-    vk_msg_2 = vk.Message(date=make_ts(0, 1), from_id=101, text="wow...", reply_message=vk_msg_1)
+    vk_msg_1 = vk.Message(conversation_message_id=0, date=make_ts(0, 0), from_id=100, text="Some link",
+                          attachments=(vk_link,))
+    vk_msg_2 = vk.Message(conversation_message_id=1, date=make_ts(0, 1), from_id=101, text="wow...",
+                          reply_message=vk_msg_1)
     [tg_msg] = await converter.convert([vk_msg_2])
     assert tg_msg.user == "Tg 101"
     assert tg_msg.text == (
@@ -125,8 +133,10 @@ async def test_reply_to_message_with_link(converter):
 
 async def test_reply_to_photo_with_text(converter):
     vk_photo = vk.Photo(url="https://example.com/img.jpg", width=0, height=0)
-    vk_msg_1 = vk.Message(date=make_ts(0, 0), from_id=100, text="Hi!", attachments=(vk_photo,))
-    vk_msg_2 = vk.Message(date=make_ts(0, 1), from_id=101, text="Hello", reply_message=vk_msg_1)
+    vk_msg_1 = vk.Message(conversation_message_id=0, date=make_ts(0, 0), from_id=100, text="Hi!",
+                          attachments=(vk_photo,))
+    vk_msg_2 = vk.Message(conversation_message_id=1, date=make_ts(0, 1), from_id=101, text="Hello",
+                          reply_message=vk_msg_1)
 
     [tg_msg] = await converter.convert([vk_msg_2])
     assert tg_msg.user == "Tg 101"
@@ -141,9 +151,11 @@ async def test_reply_to_photo_with_text(converter):
 
 
 async def test_nested_reply_2(converter):
-    vk_msg_1 = vk.Message(date=make_ts(0, 0), from_id=100, text="Hi!")
-    vk_msg_2 = vk.Message(date=make_ts(0, 1), from_id=101, text="Hello", reply_message=vk_msg_1)
-    vk_msg_3 = vk.Message(date=make_ts(0, 2), from_id=102, text="Bonjour", reply_message=vk_msg_2)
+    vk_msg_1 = vk.Message(conversation_message_id=0, date=make_ts(0, 0), from_id=100, text="Hi!")
+    vk_msg_2 = vk.Message(conversation_message_id=1, date=make_ts(0, 1), from_id=101, text="Hello",
+                          reply_message=vk_msg_1)
+    vk_msg_3 = vk.Message(conversation_message_id=2, date=make_ts(0, 2), from_id=102, text="Bonjour",
+                          reply_message=vk_msg_2)
 
     [tg_msg] = await converter.convert([vk_msg_3])
     assert tg_msg.user == "Tg 102"
@@ -157,10 +169,13 @@ async def test_nested_reply_2(converter):
 
 
 async def test_nested_reply_3(converter):
-    vk_msg_1 = vk.Message(date=make_ts(0, 0), from_id=100, text="Hi")
-    vk_msg_2 = vk.Message(date=make_ts(0, 1), from_id=101, text="Hello", reply_message=vk_msg_1)
-    vk_msg_3 = vk.Message(date=make_ts(0, 2), from_id=102, text="Bonjour", reply_message=vk_msg_2)
-    vk_msg_4 = vk.Message(date=make_ts(0, 3), from_id=100, text="Is this English?", reply_message=vk_msg_3)
+    vk_msg_1 = vk.Message(conversation_message_id=0, date=make_ts(0, 0), from_id=100, text="Hi")
+    vk_msg_2 = vk.Message(conversation_message_id=1, date=make_ts(0, 1), from_id=101, text="Hello",
+                          reply_message=vk_msg_1)
+    vk_msg_3 = vk.Message(conversation_message_id=2, date=make_ts(0, 2), from_id=102, text="Bonjour",
+                          reply_message=vk_msg_2)
+    vk_msg_4 = vk.Message(conversation_message_id=3, date=make_ts(0, 3), from_id=100, text="Is this English?",
+                          reply_message=vk_msg_3)
 
     [tg_msg] = await converter.convert([vk_msg_4])
     assert tg_msg.user == "Tg 100"
@@ -174,9 +189,11 @@ async def test_nested_reply_3(converter):
 
 
 async def test_reply_to_forwarded_message(converter):
-    vk_msg_1 = vk.Message(date=make_ts(0, 0), from_id=100, text="Hi!")
-    vk_msg_2 = vk.Message(date=make_ts(0, 1), from_id=101, text="Hello", fwd_messages=(vk_msg_1,))
-    vk_msg_3 = vk.Message(date=make_ts(0, 2), from_id=102, text="Bonjour", reply_message=vk_msg_2)
+    vk_msg_1 = vk.Message(conversation_message_id=0, date=make_ts(0, 0), from_id=100, text="Hi!")
+    vk_msg_2 = vk.Message(conversation_message_id=1, date=make_ts(0, 1), from_id=101, text="Hello",
+                          fwd_messages=(vk_msg_1,))
+    vk_msg_3 = vk.Message(conversation_message_id=2, date=make_ts(0, 2), from_id=102, text="Bonjour",
+                          reply_message=vk_msg_2)
 
     [tg_msg] = await converter.convert([vk_msg_3])
     assert tg_msg.user == "Tg 102"
@@ -195,8 +212,9 @@ async def test_reply_with_photo_and_text(media_converter, converter):
     tg_photo = tg.Photo(data_dir / "img.jpg")
     media_converter.add(vk_photo, tg_photo)
 
-    vk_msg_1 = vk.Message(date=make_ts(0, 0), from_id=100, text="Hi!")
-    vk_msg_2 = vk.Message(date=make_ts(0, 1), from_id=101, text="Hello", attachments=(vk_photo,),
+    vk_msg_1 = vk.Message(conversation_message_id=0, date=make_ts(0, 0), from_id=100, text="Hi!")
+    vk_msg_2 = vk.Message(conversation_message_id=1, date=make_ts(0, 1), from_id=101, text="Hello",
+                          attachments=(vk_photo,),
                           reply_message=vk_msg_1)
     [tg_msg_1, tg_msg_2] = await converter.convert([vk_msg_2])
 
@@ -217,8 +235,8 @@ async def test_reply_with_sticker(media_converter, converter):
     tg_sticker = tg.Sticker(data_dir / "sticker.webp")
     media_converter.add(vk_sticker, tg_sticker)
 
-    vk_msg_1 = vk.Message(date=make_ts(0, 0), from_id=100, text="Hi!")
-    vk_msg_2 = vk.Message(date=make_ts(0, 1), from_id=101, text="",
+    vk_msg_1 = vk.Message(conversation_message_id=0, date=make_ts(0, 0), from_id=100, text="Hi!")
+    vk_msg_2 = vk.Message(conversation_message_id=1, date=make_ts(0, 1), from_id=101, text="",
                           attachments=(vk_sticker,), reply_message=vk_msg_1)
     [tg_msg_1, tg_msg_2] = await converter.convert([vk_msg_2])
 
@@ -240,8 +258,8 @@ async def test_reply_with_link(media_converter, converter):
     vk_link = vk.Link(url="https://example.com", title="Example")
     media_converter.add(vk_link, None)
 
-    vk_msg_1 = vk.Message(date=make_ts(0, 0), from_id=100, text="Hi!")
-    vk_msg_2 = vk.Message(date=make_ts(0, 1), from_id=101, text="",
+    vk_msg_1 = vk.Message(conversation_message_id=0, date=make_ts(0, 0), from_id=100, text="Hi!")
+    vk_msg_2 = vk.Message(conversation_message_id=1, date=make_ts(0, 1), from_id=101, text="",
                           attachments=(vk_link,), reply_message=vk_msg_1)
 
     [tg_msg] = await converter.convert([vk_msg_2])
@@ -266,10 +284,11 @@ async def test_reply_to_message_with_many_attachments(media_converter, converter
     vk_poll = vk.Poll(question="", answers=(), anonymous=False, multiple=False)
     media_converter.add(vk_poll, None)
 
-    vk_msg_1 = vk.Message(date=make_ts(0, 0), from_id=100, text="Hi!")
-    vk_msg_2 = vk.Message(date=make_ts(0, 1), from_id=101, text="Hello",
+    vk_msg_1 = vk.Message(conversation_message_id=0, date=make_ts(0, 0), from_id=100, text="Hi!")
+    vk_msg_2 = vk.Message(conversation_message_id=1, date=make_ts(0, 1), from_id=101, text="Hello",
                           fwd_messages=(vk_msg_1,), attachments=(vk_poll, vk_photo, vk_photo, vk_photo))
-    vk_msg_3 = vk.Message(date=make_ts(0, 2), from_id=102, text="Bonjour", reply_message=vk_msg_2)
+    vk_msg_3 = vk.Message(conversation_message_id=2, date=make_ts(0, 2), from_id=102, text="Bonjour",
+                          reply_message=vk_msg_2)
 
     [tg_msg] = await converter.convert([vk_msg_3])
     assert tg_msg.user == "Tg 102"

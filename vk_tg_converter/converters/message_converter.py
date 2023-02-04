@@ -51,27 +51,32 @@ class MessageConverter(IMessageConverter):
         self.media_converter = media_converter
 
     async def convert(self, messages: list[vk.Message]) -> list[tg.Message]:
-        prepared_messages = [self._prepare_message(msg) for msg in messages]
+        messages_index: dict[int, _PreparedMessage] = {}
+        prepared_messages: list[_PreparedMessage] = []
+        for msg in messages:
+            pm = self._prepare_message(msg, messages_index)
+            prepared_messages.append(pm)
+            messages_index[msg.conversation_message_id] = pm
         await self._convert_media_in_messages(prepared_messages)
 
         result: list[tg.Message] = []
-        for msg in prepared_messages:
-            result += self._convert_one_message(msg)
+        for pm in prepared_messages:
+            result += self._convert_one_message(pm)
         return result
 
-    def _prepare_message(self, msg: vk.Message) -> _PreparedMessage:
+    def _prepare_message(self, msg: vk.Message, messages_index: dict[int, _PreparedMessage]) -> _PreparedMessage:
         if msg.action is not None:
-            return self._prepare_service_message(msg)
+            return self._prepare_service_message(msg, messages_index)
         text = self._prepare_text(msg)
         attachments = self._prepare_attachments(msg)
-        forwards = list(map(self._prepare_message, msg.fwd_messages))
+        forwards = [self._prepare_message(fwd, messages_index) for fwd in msg.fwd_messages]
         if not (text or attachments or forwards):
             text = "*empty message*"
         return _PreparedMessage(
             vk_name=self.username_manager.get_full_name(msg.from_id),
             tg_name_opt=self.username_manager.try_get_tg_name(msg.from_id),
             date=msg.date,
-            reply=None if msg.reply_message is None else self._prepare_message(msg.reply_message),
+            reply=None if msg.reply_message is None else self._prepare_message(msg.reply_message, messages_index),
             text=text,
             attachments=attachments,
             forwards=forwards,
@@ -164,12 +169,14 @@ class MessageConverter(IMessageConverter):
             body += self._inner_message_as_text_lines(forward, "Forward")
         return header + self._shift_lines(body)
 
-    def _prepare_service_message(self, msg: vk.Message) -> _PreparedMessage:
+    def _prepare_service_message(self, msg: vk.Message,
+                                 messages_index: dict[int, _PreparedMessage]) -> _PreparedMessage:
         assert msg.action is not None
         vk_name: str = self.username_manager.get_full_name(msg.from_id)
         tg_name_opt: Optional[str] = self.username_manager.try_get_tg_name(msg.from_id)
 
         text: str
+        reply: None | _PreparedMessage = None
         if isinstance(msg.action, vk.CreateChatAction):
             text = f"*{vk_name} created chat*"
         elif isinstance(msg.action, vk.UpdateTitleAction):
@@ -190,9 +197,17 @@ class MessageConverter(IMessageConverter):
                 kicked_user_name = self.username_manager.get_full_name(msg.action.kicked_user_id)
                 text = f"*{vk_name} kicked {kicked_user_name}*"
         elif isinstance(msg.action, vk.PinMessageAction):
-            text = f"*{vk_name} pinned message*"  # TODO: consider using conversation_message_id here
+            pinned_id = msg.action.conversation_message_id
+            if pinned_id in messages_index:
+                text = f"*{vk_name} pinned message*"
+                reply = messages_index[msg.action.conversation_message_id]
+            elif msg.action.message:
+                text = f"*{vk_name} pinned message: '{msg.action.message}'*"
+            else:
+                text = f"*{vk_name} pinned message*"
         elif isinstance(msg.action, vk.UnpinMessageAction):
-            text = f"*{vk_name} unpinned message*"  # TODO: consider using conversation_message_id here
+            text = f"*{vk_name} unpinned message*"
+            reply = messages_index.get(msg.action.conversation_message_id)
         elif isinstance(msg.action, vk.ScreenshotAction):
             text = f"*{vk_name} made a screenshot*"
         else:
@@ -203,7 +218,7 @@ class MessageConverter(IMessageConverter):
             vk_name=vk_name,
             tg_name_opt=tg_name_opt,
             date=msg.date,
-            reply=None,
+            reply=reply,
             text=text,
             forwards=[],
             attachments=self._prepare_attachments(msg),
