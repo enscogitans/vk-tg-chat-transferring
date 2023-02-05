@@ -12,6 +12,7 @@ from typing import Optional
 import PIL.Image
 from aiohttp import ClientSession
 from tqdm.asyncio import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
 from vk_api.vk_api import VkApiMethod
 
 import tg_importer.types as tg
@@ -60,7 +61,8 @@ class MediaConverter(IMediaConverter):
                 result[idx] = await self._try_convert_non_video(attch, session)
 
             tasks = [one_task(attch, idx) for attch, idx in non_videos_with_idx]
-            await tqdm.gather(*tasks, desc="Non-video", disable=self.disable_progress_bar)
+            if tasks:
+                await tqdm.gather(*tasks, desc="Non-video", disable=self.disable_progress_bar)
 
         async def videos_task(session: ClientSession) -> None:
             async def one_task(video: vk.Video, idx: int, executor: Executor) -> None:
@@ -68,13 +70,17 @@ class MediaConverter(IMediaConverter):
 
             with ThreadPoolExecutor(max_workers=self.max_video_workers) as executor:
                 tasks = [one_task(video, idx, executor) for video, idx in videos_with_idx]
-                await tqdm.gather(*tasks, desc="Video", disable=self.disable_progress_bar)
+                if tasks:
+                    await tqdm.gather(*tasks, desc="Video", disable=self.disable_progress_bar)
 
-        async with ClientSession() as session:
-            await asyncio.gather(non_videos_task(session))
-            # Running them in parallel doesn't really speed anything up
-            # Sequential run at least has better visualization
-            await asyncio.gather(videos_task(session))
+        # This is to prevent logger and tqdm outputs interfere
+        # Why logger.parent? I don't know, but None or just logger or logger.root don't fix the issue
+        with logging_redirect_tqdm([self.logger.parent]):
+            async with ClientSession() as session:
+                await asyncio.gather(non_videos_task(session))
+                # Running them in parallel doesn't really speed anything up
+                # Sequential run at least has better visualization
+                await asyncio.gather(videos_task(session))
         return result
 
     @staticmethod
