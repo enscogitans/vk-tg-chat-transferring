@@ -296,7 +296,7 @@ class Wall:
         )
 
     def get_post_url(self) -> str:
-        return f"https://vk.com/wall{self.owner_id}_{self.id}"  # TODO: Verify that we should use owner_id here
+        return f"https://vk.com/wall{self.owner_id}_{self.id}"
 
 
 @dataclass(frozen=True)
