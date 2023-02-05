@@ -1,4 +1,5 @@
 import abc
+from logging import Logger
 from pathlib import Path
 from typing import Optional
 
@@ -19,17 +20,20 @@ class IHistoryConverterFactory(abc.ABC):
 
 
 class HistoryConverterFactory(IHistoryConverterFactory):
-    def __init__(self, vk_api: VkApiMethod, config: Config) -> None:
+    def __init__(self, vk_api: VkApiMethod, config: Config, logger: Logger) -> None:
         self.vk_api = vk_api
         self.config = config
+        self.logger = logger
 
     def create(self, contacts: Optional[list[ContactInfo]],
                media_export_dir: Path, disable_progress_bar: bool) -> HistoryConverter:
         username_manager = UsernameManager(self.vk_api, contacts)
         video_downloader = VideoDownloader(
+            self.logger.getChild("YDL"),
             self.config.tg.allowed_video_formats, self.config.tg.video_conversion_format,
             self.config.vk.max_video_size_mb, self.config.vk.video_quality, self.config.vk.max_video_download_retries)
         media_converter = MediaConverter(
-            self.vk_api, video_downloader, media_export_dir, self.config, disable_progress_bar)
+            self.vk_api, video_downloader, self.logger.getChild("media_converter"),
+            media_export_dir, self.config, disable_progress_bar)
         message_converter = MessageConverter(self.config.vk.timezone, username_manager, media_converter)
         return HistoryConverter(message_converter, media_converter)

@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import logging
 import os
 from types import UnionType
 from typing import cast
@@ -18,6 +19,15 @@ from config import Config
 from tg_importer.storage import ITgHistoryStorage, TgHistoryStorage
 
 
+def make_logger(name: str) -> logging.Logger:
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter("%(levelname)s: %(name)s - %(message)s"))
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.WARNING)
+    logger.addHandler(handler)
+    return logger
+
+
 def get_arguments(config: Config, tg_history_storage: ITgHistoryStorage) -> MainArguments:
     parser = argparse.ArgumentParser()
     main_parser = MainArgumentsParser.fill_parser(parser, config)
@@ -34,7 +44,7 @@ async def run_module(args: MainArguments, config: Config, vk_client: VkClient,
     if isinstance(args, cast(UnionType, ContactsArguments)):
         return await vk_tg_converter.contacts.main(args, vk_client, tg_client)  # type: ignore[arg-type]
     if isinstance(args, ConverterArguments):
-        return await vk_tg_converter.main(args, config, vk_client, tg_history_storage)
+        return await vk_tg_converter.main(args, config, vk_client, tg_history_storage, make_logger("converter"))
     if isinstance(args, cast(UnionType, ChatsArguments)):
         return await chats.main(args, tg_client)  # type: ignore[arg-type]
     if isinstance(args, TgImporterArguments):

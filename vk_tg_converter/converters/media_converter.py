@@ -5,6 +5,7 @@ import urllib.parse
 import urllib.request
 from asyncio import AbstractEventLoop
 from concurrent.futures import Executor, ThreadPoolExecutor
+from logging import Logger
 from pathlib import Path, PurePath
 from typing import Optional
 
@@ -25,7 +26,7 @@ class IMediaConverter(abc.ABC):
 
 
 class MediaConverter(IMediaConverter):
-    def __init__(self, api: VkApiMethod, video_downloader: IVideoDownloader,
+    def __init__(self, api: VkApiMethod, video_downloader: IVideoDownloader, logger: Logger,
                  export_dir: Path, config: Config, disable_progress_bar: bool) -> None:
         export_dir.mkdir(parents=True, exist_ok=True)
         if any(True for _ in export_dir.iterdir()):
@@ -33,6 +34,7 @@ class MediaConverter(IMediaConverter):
         self.export_dir = export_dir
         self.api = api
         self.video_downloader = video_downloader
+        self.logger = logger
         self.n_files_demanded = 0
 
         self.max_video_workers = config.vk.max_video_workers
@@ -97,22 +99,30 @@ class MediaConverter(IMediaConverter):
     async def _try_convert_video(self, video: vk.Video, session: ClientSession,
                                  loop: AbstractEventLoop, executor: Executor) -> Optional[tg.Video]:
         async with self.video_download_semaphore:
-            if player_url_opt := video.try_get_player_url(self.api):
-                file_path_opt = await loop.run_in_executor(executor, self._try_download_video, player_url_opt)
-                if file_path_opt is not None:
-                    return tg.Video(
-                        path=file_path_opt,
-                        title=video.title,
-                        duration=video.duration,
-                        width=video.width,
-                        height=video.height,
-                        thumb_path=await self._try_download_file(video.image_url, session),
-                    )
-        return None
+            player_url_opt = video.try_get_player_url(self.api)
+            if player_url_opt is None:
+                self.logger.error(f"Couldn't get video url for '{video.title}'. Skipping")
+                return None
+            file_path_opt = await loop.run_in_executor(executor, self._try_download_video, player_url_opt)
+            if file_path_opt is None:
+                self.logger.error(f"Couldn't download video '{video.title}'. Skipping")
+                return None
+            thumb_path = await self._try_download_file(video.image_url, session)
+            if thumb_path is None:
+                self.logger.warning(f"Couldn't download thumbnail for '{video.title}'. Skipping the thumbnail")
+        return tg.Video(
+            path=file_path_opt,
+            title=video.title,
+            duration=video.duration,
+            width=video.width,
+            height=video.height,
+            thumb_path=thumb_path,
+        )
 
     async def _try_convert_photo(self, photo: vk.Photo, session: ClientSession) -> Optional[tg.Photo]:
         if file_opt := await self._try_download_file(photo.url, session):
             return tg.Photo(file_opt)
+        self.logger.error(f"Couldn't download photo. Skipping. Link {photo.url}")
         return None
 
     async def _try_convert_sticker(self, sticker: vk.Sticker, session: ClientSession) -> Optional[tg.Sticker]:
@@ -125,21 +135,28 @@ class MediaConverter(IMediaConverter):
                 file_opt.unlink()
                 file_opt = new_path
             return tg.Sticker(path=file_opt)
+        self.logger.error(f"Couldn't download sticker. Skipping. Link {sticker.image_url}")
         return None
 
     async def _try_convert_document(self, document: vk.Document, session: ClientSession) -> Optional[tg.Document]:
         if file_opt := await self._try_download_file(document.url, session, extension_hint="." + document.extension):
             return tg.Document(file_opt, title=document.title)
+        self.logger.error(f"Couldn't download document '{document.title}'. Skipping")
         return None
 
     async def _try_convert_audio(self, audio: vk.Audio, session: ClientSession) -> Optional[tg.Audio]:
-        if audio.url and (file_opt := await self._try_download_file(audio.url, session)):
+        if not audio.url:
+            self.logger.error(f"Couldn't download audio '{audio.title} - {audio.artist}'. No url available. Skipping")
+            return None
+        if file_opt := await self._try_download_file(audio.url, session):
             return tg.Audio(file_opt, performer=audio.artist, title=audio.title, duration=audio.duration)
+        self.logger.error(f"Couldn't download audio '{audio.title} - {audio.artist}'. Skipping")
         return None
 
     async def _try_convert_voice(self, voice: vk.Voice, session: ClientSession) -> Optional[tg.Voice]:
         if file_opt := await self._try_download_file(voice.link_ogg, session):
             return tg.Voice(file_opt, duration=voice.duration)
+        self.logger.error(f"Couldn't download voice. Skipping. Link {voice.link_ogg}")
         return None
 
     async def _try_download_file(self, url: str, session: ClientSession, extension_hint: str = "") -> Optional[Path]:

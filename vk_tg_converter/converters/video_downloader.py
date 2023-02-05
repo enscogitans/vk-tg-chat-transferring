@@ -32,8 +32,9 @@ class _VideoConverterPostprocessor(PostProcessor):
 
 
 class VideoDownloader(IVideoDownloader):
-    def __init__(self, allowed_formats: list[str], conversion_format: str,
+    def __init__(self, logger: logging.Logger, allowed_formats: list[str], conversion_format: str,
                  max_video_size_mb: int, video_quality: str, retries: int) -> None:
+        self.logger = logger
         self.allowed_formats = allowed_formats
         self.conversion_format = conversion_format
         self.max_video_size_mb = max_video_size_mb
@@ -42,8 +43,6 @@ class VideoDownloader(IVideoDownloader):
 
     def try_download_video(self, player_url: str, output_template: str) -> Optional[PurePath]:
         # For 'output_template' see https://github.com/ytdl-org/youtube-dl#output-template
-        logger = logging.getLogger()
-        logger.disabled = True
         downloader_params = {
             "outtmpl": output_template,
             "retries": self.retries,
@@ -52,8 +51,7 @@ class VideoDownloader(IVideoDownloader):
             # https://github.com/ytdl-org/youtube-dl/blob/5208ae92fc3e2916cdccae45c6b9a516be3d5796/youtube_dl/downloader/http.py#L207-L216
             "max_filesize": self.max_video_size_mb * 2 ** 20,  # in bytes. Download will be aborted if file exceeds it
             "format": self.video_quality,
-            "quiet": True,
-            "logger": logger,
+            "logger": self.logger,
         }
         try:
             with YoutubeDL(downloader_params) as ydl:
@@ -66,5 +64,4 @@ class VideoDownloader(IVideoDownloader):
                 file_path: str = ydl.prepare_filename(download_info)  # Generated with respect to 'outtmpl'
             return PurePath(file_path)
         except DownloadError:
-            # TODO: maybe add logger
             return None
