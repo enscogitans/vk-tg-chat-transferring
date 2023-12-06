@@ -35,33 +35,29 @@ def get_arguments(config: Config, tg_history_storage: ITgHistoryStorage) -> Main
     return main_parser.parse_arguments(namespace, tg_history_storage)
 
 
-async def run_module(args: MainArguments, config: Config, vk_client: VkClient,
-                     tg_client: TgClient, tg_history_storage: ITgHistoryStorage) -> None:
+async def run_module(args: MainArguments, config: Config, tg_history_storage: ITgHistoryStorage) -> None:
+    vk_client = lambda: VkClient(config.vk)  # noqa: E731
+    tg_client = lambda: TgClient(config.tg)  # noqa: E731
     if isinstance(args, cast(UnionType, LoginArguments)):
         return await login.main(args, config)  # type: ignore[arg-type]
     if isinstance(args, VkExporterArguments):
-        return vk_exporter.main(args, vk_client)
+        return vk_exporter.main(args, vk_client())
     if isinstance(args, cast(UnionType, ContactsArguments)):
-        return await vk_tg_converter.contacts.main(args, vk_client, tg_client)  # type: ignore[arg-type]
+        return await vk_tg_converter.contacts.main(args, vk_client(), tg_client())  # type: ignore[arg-type]
     if isinstance(args, ConverterArguments):
-        return await vk_tg_converter.main(args, config, vk_client, tg_history_storage, make_logger("converter"))
+        return await vk_tg_converter.main(args, config, vk_client(), tg_history_storage, make_logger("converter"))
     if isinstance(args, cast(UnionType, ChatsArguments)):
-        return await chats.main(args, tg_client)  # type: ignore[arg-type]
+        return await chats.main(args, tg_client())  # type: ignore[arg-type]
     if isinstance(args, TgImporterArguments):
-        return await tg_importer.main(args, config.tg, tg_client, tg_history_storage)
+        return await tg_importer.main(args, config.tg, tg_client(), tg_history_storage)
     raise ValueError(f"Unexpected arguments: {args}")
 
 
 async def main() -> None:
     config = Config()
     tg_history_storage = TgHistoryStorage()
-
     args = get_arguments(config, tg_history_storage)
-
-    vk_client = VkClient(config.vk)
-    tg_client = TgClient(config.tg)
-
-    await run_module(args, config, vk_client, tg_client, tg_history_storage)
+    await run_module(args, config, tg_history_storage)
 
 
 if __name__ == "__main__":
