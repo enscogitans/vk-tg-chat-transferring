@@ -157,6 +157,14 @@ class Video:
 
     @staticmethod
     def parse(video_dict: dict) -> "Video":
+        image_url: str
+        try:
+            video_images = video_dict["image"]
+            best_image = Video._pick_best_image(video_images)
+            image_url = best_image["url"]
+        except KeyError as e:  # there is no 'image' param for deleted videos
+            image_url = ""
+
         return Video(
             title=video_dict["title"],
             id=video_dict["id"],
@@ -165,7 +173,7 @@ class Video:
             height=video_dict.get("height", 0),
             duration=video_dict.get("duration", 0),  # if the content is restricted, 'duration' field is missing
             content_restricted="restriction" in video_dict,
-            image_url=Video._pick_best_image(video_dict["image"])["url"],
+            image_url=image_url,
             access_key=video_dict.get("access_key"),
         )
 
