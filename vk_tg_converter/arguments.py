@@ -86,7 +86,7 @@ class ConverterArgumentsParser:
         if args.media_export_dir.exists():
             if not args.media_export_dir.is_dir():
                 self.parser.error(f"Output media path does not point to a directory: {args.media_export_dir}")
-            # if any(True for _ in args.media_export_dir.iterdir()):
-            #     self.parser.error(f"Output media directory is not empty: {args.media_export_dir}")
+            if any(True for _ in args.media_export_dir.iterdir()):
+                self.parser.error(f"Output media directory is not empty: {args.media_export_dir}")
         if (args.contacts_file_opt is None) and (args.input_file_opt is None):
             self.parser.error("You must not use --skip-contacts if you use --dummy-input")
