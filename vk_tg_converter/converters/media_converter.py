@@ -113,9 +113,13 @@ class MediaConverter(IMediaConverter):
             if file_path_opt is None:
                 self.logger.error(f"Couldn't download video '{video.title}'. Skipping")
                 return None
-            thumb_path = await self._try_download_file(video.image_url, session)
-            if thumb_path is None:
-                self.logger.warning(f"Couldn't download thumbnail for '{video.title}'. Skipping the thumbnail")
+            thumb_path = None
+            if video.image_url is not None:
+                thumb_path = await self._try_download_file(video.image_url, session)
+                if thumb_path is None:
+                    self.logger.warning(f"Couldn't download thumbnail for '{video.title}'. Skipping the thumbnail")
+            else:
+                self.logger.warning(f"Couldn't download thumbnail for '{video.title}', video.image_url is None")
         return tg.Video(
             path=file_path_opt,
             title=video.title,

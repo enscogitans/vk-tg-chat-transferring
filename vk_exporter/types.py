@@ -152,7 +152,7 @@ class Video:
     height: int
     duration: int
     content_restricted: bool  # If True, video won't be available
-    image_url: str
+    image_url: Optional[str]
     access_key: Optional[str]  # https://dev.vk.com/reference/objects
 
     @staticmethod
@@ -165,7 +165,7 @@ class Video:
             height=video_dict.get("height", 0),
             duration=video_dict.get("duration", 0),  # if the content is restricted, 'duration' field is missing
             content_restricted="restriction" in video_dict,
-            image_url=Video._pick_best_image(video_dict["image"])["url"],
+            image_url=(Video._try_get_image_url(video_dict)),
             access_key=video_dict.get("access_key"),
         )
 
@@ -180,6 +180,18 @@ class Video:
         assert len(response["items"]) == 1, response
         url = response["items"][0].get("player")  # Video can be deleted or something. In this case 'player' is absent
         return cast(Optional[str], url)
+
+    @staticmethod
+    def _try_get_image_url(video_dict: dict) -> Optional[str]:
+        if "image" in video_dict:
+            video_images = video_dict["image"]
+            best_image = Video._pick_best_image(video_images)
+            image_url: str = best_image["url"]
+            return image_url
+        else:
+            # There is no 'image' param for deleted videos
+            # ( https://github.com/enscogitans/vk-tg-chat-transferring/pull/3 )
+            return None
 
     @staticmethod
     def _pick_best_image(images_list: list[dict]) -> dict:
