@@ -30,8 +30,8 @@ class MediaConverter(IMediaConverter):
     def __init__(self, api: VkApiMethod, video_downloader: IVideoDownloader, logger: Logger,
                  export_dir: Path, config: Config, disable_progress_bar: bool) -> None:
         export_dir.mkdir(parents=True, exist_ok=True)
-        if any(True for _ in export_dir.iterdir()):
-            raise ValueError(f"Directory is not empty: {export_dir}")
+        # if any(True for _ in export_dir.iterdir()):
+        #     raise ValueError(f"Directory is not empty: {export_dir}")
         self.export_dir = export_dir
         self.api = api
         self.video_downloader = video_downloader
@@ -51,6 +51,7 @@ class MediaConverter(IMediaConverter):
         for i, attch in enumerate(attachments):
             if isinstance(attch, vk.Video):
                 videos_with_idx.append((attch, i))
+                # pass
             elif self._is_non_video_supported(attch):
                 non_videos_with_idx.append((attch, i))
 
@@ -77,10 +78,12 @@ class MediaConverter(IMediaConverter):
         # Why logger.parent? I don't know, but None or just logger or logger.root don't fix the issue
         with logging_redirect_tqdm([self.logger.parent]):
             async with ClientSession() as session:
-                await asyncio.gather(non_videos_task(session))
+                # await asyncio.gather(non_videos_task(session))
+                # pass
                 # Running them in parallel doesn't really speed anything up
                 # Sequential run at least has better visualization
                 await asyncio.gather(videos_task(session))
+                # pass
         return result
 
     @staticmethod
