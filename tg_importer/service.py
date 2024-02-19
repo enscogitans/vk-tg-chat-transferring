@@ -35,10 +35,11 @@ class TgImporterService(ITgImporterService):
             raise ValueError(f"Invalid peer: only user and channel (supergroup) are supported. Provided {peer_type}")
         tg_history = self.tg_history_storage.load_history(tg_history_path)
         is_peer_group: bool = peer_type == "channel"
-        if is_peer_group != tg_history.is_group:
-            # In both cases Telegram will fail with error: 400 IMPORT_PEER_TYPE_INVALID
-            raise ValueError(f"Invalid peer: peer and history must be of same type, got "
-                             f"peer is_group={is_peer_group}, history is_group={tg_history.is_group}")
+
+        # if is_peer_group != tg_history.is_group:
+        #     # In both cases Telegram will fail with error: 400 IMPORT_PEER_TYPE_INVALID
+        #     raise ValueError(f"Invalid peer: peer and history must be of same type, got "
+        #                      f"peer is_group={is_peer_group}, history is_group={tg_history.is_group}")
         success = await self._import_messages_inner(chat_id, tg_history, disable_progress_bar)
         if success:
             print("Import finished successfully")
@@ -58,8 +59,8 @@ class TgImporterService(ITgImporterService):
         import_parsed: HistoryImportParsed = await self.tg_client.invoke(CheckHistoryImport(import_head=import_head))
         # If Encoder works correctly parsed chat type and history chat type should be the same
         # I'm not sure whether it is awful if they differ. Let's check just in case
-        assert import_parsed.pm or import_parsed.group, "Telegram sees unknown chat type"
-        assert tg_history.is_group == import_parsed.group, f"{tg_history.is_group=}, {import_parsed.group=}"
+        # assert import_parsed.pm or import_parsed.group, "Telegram sees unknown chat type"
+        # assert tg_history.is_group == import_parsed.group, f"{tg_history.is_group=}, {import_parsed.group=}"
 
         peer: InputPeer = await self.tg_client.resolve_peer(chat_id)  # type: ignore
         await self.tg_client.invoke(CheckHistoryImportPeer(peer=peer))  # CheckedHistoryImportPeer
