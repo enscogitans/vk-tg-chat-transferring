@@ -79,7 +79,6 @@ class TgImporterService(ITgImporterService):
                 await media.upload_media(self.tg_client, peer, import_id)
 
         await tqdm.gather(*map(upload, media_files), leave=True, disable=disable_progress_bar, desc="Uploading media")
-        # pass
 
         success: bool = await self.tg_client.invoke(StartHistoryImport(peer=peer, import_id=import_id))
         return success
